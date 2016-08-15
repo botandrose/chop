@@ -2,6 +2,29 @@ require "delegate"
       
 module Tome
   class Table < SimpleDelegator
+    def self.diff! table, &block
+      klass = Class.new(self) do
+        class_attribute :cell_transformers
+        self.cell_transformers = []
+
+        def self.cell index, &block
+          cell_transformers[index] = block
+        end
+
+        def cell_to_text cell, index
+          if transformer = cell_transformers[index]
+            transformer.call cell
+          else
+            super
+          end
+        end
+
+        instance_eval &block
+      end
+
+      klass.new.diff! table
+    end
+
     def initialize selector = "table", session: Capybara.current_session
       super(session)
       @selector = selector
@@ -13,7 +36,7 @@ module Tome
 
     def header
       header_elements.collect do |row|
-        row_to_text(row)
+        row.all(:xpath, "./*").map(&:text)
       end
     end
 
@@ -52,13 +75,17 @@ module Tome
     end
 
     def row_to_text row
-      row.all(:xpath, "./*").collect do |cell|
-        text = cell.text
-        if text.blank? and image = cell.all("img").first
-          text = image["alt"]
-        end
-        text
+      row.all(:xpath, "./*").map.with_index do |cell, index|
+        cell_to_text cell, index
       end
+    end
+
+    def cell_to_text cell, index
+      text = cell.text
+      if text.blank? and image = cell.all("img").first
+        text = image["alt"]
+      end
+      text
     end
   end
 end
