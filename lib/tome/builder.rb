@@ -20,7 +20,7 @@ module Tome
 
   class TableBuilder < Struct.new(:table)
     def build!
-      table.hashes.each do |attributes|
+      table.hashes.map do |attributes|
         transformations.each { |transformation| transformation.call(attributes) }
         factory.create! attributes
       end
