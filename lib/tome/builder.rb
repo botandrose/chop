@@ -11,7 +11,7 @@ module Tome
     end
 
     def self.build! table, klass, &block
-      if block_given?
+      if block_given? and !builders[klass]
         register klass, &block
       end
       builders[klass].build!(table)
