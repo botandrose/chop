@@ -60,13 +60,13 @@ module Tome
       attributes.replace new_attributes
     end
 
-    def self.ds_image *keys
+    def self.has_attached_file *keys
       keys.each do |key|
+        key = key.to_s
         transformation do |attributes|
-          if attributes[key.to_s].present?
-            attributes["#{key}_file"] = File.open(Rails.root.join("features/support/fixtures/#{attributes[key.to_s]}"))
+          if attributes[key].present?
+            attributes[key] = File.open(Rails.root.join("features/support/fixtures/#{attributes[key]}"))
           end
-          attributes.delete(key.to_s)
         end
       end
     end
