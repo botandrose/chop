@@ -11,6 +11,8 @@ module Tome
     end
 
     def self.build! table, klass, &block
+      # subclass to prevent multiple blocks from stomping on each other
+      klass = Class.new(klass)
       if block_given? and !builders[klass]
         register klass, &block
       end
