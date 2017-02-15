@@ -19,7 +19,7 @@ module Tome
           end
         end
 
-        instance_eval &block
+        instance_eval &block if block_given?
       end
 
       klass.new.diff! table
