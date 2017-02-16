@@ -1,6 +1,6 @@
 require "delegate"
       
-module Tome
+module Chop
   class UnorderedList < SimpleDelegator
     def self.diff! table, &block
       new.diff! table

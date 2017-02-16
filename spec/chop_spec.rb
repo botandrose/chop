@@ -1,8 +1,8 @@
 require 'spec_helper'
 
-describe Tome do
+describe Chop do
   it 'has a version number' do
-    expect(Tome::VERSION).not_to be nil
+    expect(Chop::VERSION).not_to be nil
   end
 
   it 'does something useful' do

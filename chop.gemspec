@@ -1,17 +1,17 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'tome/version'
+require 'chop/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "tome"
-  spec.version       = Tome::VERSION
+  spec.name          = "chop"
+  spec.version       = Chop::VERSION
   spec.authors       = ["Micah Geisel"]
   spec.email         = ["micah@botandrose.com"]
 
   spec.summary       = %q{Abstractions for use in acceptance tests}
   spec.description   = %q{Abstractions for use in acceptance tests}
-  spec.homepage      = "http://github.com/botandrose/tome"
+  spec.homepage      = "http://github.com/botandrose/chop"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or

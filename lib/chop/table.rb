@@ -1,6 +1,6 @@
 require "delegate"
       
-module Tome
+module Chop
   class Table < SimpleDelegator
     def self.diff! table, &block
       klass = Class.new(self) do

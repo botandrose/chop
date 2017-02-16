@@ -1,4 +1,4 @@
-module Tome
+module Chop
   class Builder < Struct.new(:table, :klass, :block)
     def self.build! table, klass, &block
       new(table, klass, block).build!
