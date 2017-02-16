@@ -16,9 +16,9 @@ TODO: Write more usage instructions here. See the source for usage in the meanti
 
 * `Chop::Builder`: Create ActiveRecord instances from a Cucumber table.
 
-* `Chop::Table`: Diff a Cucumber table with a <table>.
-* `Chop::DefinitionList`: Diff a Cucumber table with a <dl>.
-* `Chop::UnorderedList`: Diff a Cucumber table with a <ul>.
+* `Chop::Table`: Diff a Cucumber table with a `<table>`.
+* `Chop::DefinitionList`: Diff a Cucumber table with a `<dl>`.
+* `Chop::UnorderedList`: Diff a Cucumber table with a `<ul>`.
 
 ## Development
 
