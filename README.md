@@ -1,28 +1,24 @@
 # Chop
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/chop`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Slice and dice your Cucumber tables with ease!
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
 ```ruby
-gem 'chop'
+group :test do
+  gem 'chop'
+end
 ```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install chop
 
 ## Usage
 
-TODO: Write usage instructions here
+TODO: Write more usage instructions here. See the source for usage in the meantime.
+
+* `Chop::Builder`: Create ActiveRecord instances from a Cucumber table.
+
+* `Chop::Table`: Diff a Cucumber table with a <table>.
+* `Chop::DefinitionList`: Diff a Cucumber table with a <dl>.
+* `Chop::UnorderedList`: Diff a Cucumber table with a <ul>.
 
 ## Development
 
@@ -33,7 +29,6 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/botandrose/chop.
-
 
 ## License
 
