@@ -9,7 +9,6 @@ module Chop
     def initialize(*)
       super
       self.transformations = []
-      underscore_keys
       instance_eval &block if block.respond_to?(:call)
     end
 
@@ -24,9 +23,9 @@ module Chop
       transformations << block
     end
 
-    def field attribute
+    def field attribute, default: ""
       transformation do |attributes|
-        attributes[attribute.to_s] = yield(attributes.fetch(attribute.to_s, ""))
+        attributes[attribute.to_s] = yield(attributes.fetch(attribute.to_s, default))
       end
     end
 
@@ -39,35 +38,35 @@ module Chop
       end
     end
 
-    def file *keys
+    def file *keys, path: "features/support/fixtures"
       keys.each do |key|
-        field key do |path|
-          File.open("features/support/fixtures/#{path}") if path.present?
+        field key do |file|
+          File.open(File.join(path, file)) if file.present?
         end
       end
     end
 
-    def files *keys
+    def files *keys, path: "features/support/fixtures", delimiter: " "
       keys.each do |key|
         field key do |paths|
-          paths.split(" ").map do |path|
-            File.open("features/support/fixtures/#{path}")
+          paths.split(delimiter).map do |file|
+            File.open(File.join(path, file))
           end
         end
       end
     end
 
-    def has_many key, class_name=nil, delimiter: ", ", name_field: :name
+    def has_many key, klass=nil, delimiter: ", ", name_field: :name
       field key do |names|
         names.split(delimiter).map do |name|
-          class_name.find_by!(name_field => name)
+          klass.find_by!(name_field => name)
         end
       end
     end
 
-    def has_one key, class_name=nil, name_field: :name
+    def has_one key, klass=nil, name_field: :name
       field key do |name|
-        class_name.find_by!(name_field => name)
+        klass.find_by!(name_field => name)
       end
     end
     alias_method :belongs_to, :has_one
