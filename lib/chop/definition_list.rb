@@ -47,5 +47,7 @@ module Chop
       end
     end
   end
+
+  Dl = DefinitionList
 end
 
