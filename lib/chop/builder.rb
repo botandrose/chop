@@ -1,3 +1,6 @@
+require "active_support/core_ext/string/inflections"
+require "active_support/core_ext/object/blank"
+
 module Chop
   class Builder < Struct.new(:table, :klass, :block)
     def self.build! table, klass, &block
@@ -32,7 +35,7 @@ module Chop
     def underscore_keys
       transformation do |attributes|
         new_attributes = attributes.inject({}) do |hash, (key, value)|
-          hash.merge key.parameterize.underscore => value
+          hash.merge key.parameterize(separator: "_") => value
         end
         attributes.replace new_attributes
       end
