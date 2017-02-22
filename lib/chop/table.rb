@@ -1,7 +1,8 @@
-require "delegate"
+require "active_support/core_ext/class/attribute"
+require "active_support/core_ext/object/blank"
       
 module Chop
-  class Table < SimpleDelegator
+  class Table < Struct.new(:session)
     def self.diff! table, &block
       klass = Class.new(self) do
         class_attribute :cell_transformers
@@ -71,7 +72,7 @@ module Chop
     end
 
     def node
-      @node ||= find(@selector)
+      @node ||= session.find(@selector)
     end
 
     def row_to_text row
