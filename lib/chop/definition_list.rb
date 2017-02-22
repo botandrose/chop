@@ -1,7 +1,7 @@
-require "delegate"
+require "active_support/core_ext/object/blank"
       
 module Chop
-  class DefinitionList < SimpleDelegator
+  class DefinitionList < Struct.new(:session)
     def self.diff! table, &block
       new.diff! table
     end
@@ -34,7 +34,7 @@ module Chop
     end
 
     def node
-      @node ||= find(@selector)
+      @node ||= session.find(@selector)
     end
 
     def row_to_text row
