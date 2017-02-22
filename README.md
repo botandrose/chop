@@ -16,7 +16,7 @@ end
 
 Chop monkeypatches Cucumber tables with two new methods:
 
-* `#build!`: Creates ActiveRecord instances.
+* `#build!`: Creates ActiveRecord instances. Also supports FactoryGirl.
 * `#diff!`: Enhances existing method to also accept a CSS selector. Currently supports diffing `<table>`, `<dl>`, and `<ul>`.
 
 Both these methods accept blocks for customization.
@@ -76,7 +76,7 @@ Given "the following industries exist:" do |table|
 end
 
 Given "the following stories exist:" do |table|
-  table.create! ConversationTable::Story do
+  table.create! factory_girl: "conversation_table/story" do
     belongs_to :industry, ConversationTable::Industry
     file :image_file
   end

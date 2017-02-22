@@ -30,6 +30,14 @@ describe Chop::Builder do
       allow(klass).to receive(:create!).and_return(record_1, record_2)
       expect(subject.build!).to eq [record_1, record_2]
     end
+
+    it "supports integration with FactoryGirl" do
+      factory_girl = double
+      stub_const("FactoryGirl", factory_girl)
+      allow(factory_girl).to receive(:create).with("factory_name", "a" => 1)
+      allow(factory_girl).to receive(:create).with("factory_name", "a" => 2)
+      described_class.new(table, factory_girl: "factory_name").build!
+    end
   end
 
   describe "block methods" do

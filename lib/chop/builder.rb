@@ -18,7 +18,15 @@ module Chop
     def build!
       table.hashes.map do |attributes|
         transformations.each { |transformation| transformation.call(attributes) }
-        klass.create! attributes
+        if klass.is_a?(Hash)
+          if factory = klass[:factory_girl]
+            FactoryGirl.create factory, attributes
+          else
+            raise "Unknown building strategy"
+          end
+        else
+          klass.create! attributes
+        end
       end
     end
 
