@@ -35,7 +35,7 @@ module Chop
     def underscore_keys
       transformation do |attributes|
         new_attributes = attributes.inject({}) do |hash, (key, value)|
-          hash.merge key.parameterize(separator: "_") => value
+          hash.merge key.parameterize.underscore => value
         end
         attributes.replace new_attributes
       end
