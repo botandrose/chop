@@ -32,6 +32,7 @@ High-level declarative transformations:
 * `#has_one/#belongs_to`: Replaces an entity name with that entity. Uses `.find_by_name` by default.
 * `#has_many`: Replaces a comma-delimited list of entity names with an array of those entities. Uses `.find_by_name` by default.
 * `#underscore_keys`: Converts all hash keys to underscored versions.
+* `#rename`: Renames one or more fields.
 
 All these methods are implemented in terms of the following low-level methods, useful for when you need more control over the transformation:
 * `#field`: performs transformations on a specific field value.
@@ -47,23 +48,23 @@ TODO: Pending API overhaul.
 # features/manage_industries.feature
 
 Given the following industries exist:
-  | name              | wall_background_file | table_background_file |
-  | Another industry  | wall.jpg             | table.jpg             |
-  | Example industry  | wall.jpg             | table.jpg             |
+  | name             | wall_background | table_background |
+  | Another industry | wall.jpg        | table.jpg        |
+  | Example industry | wall.jpg        | table.jpg        |
 
 Given the following stories exist:
-  | industry          | image_file   | headline          |
-  | Example industry  | example.jpg  | Example headline  |
-  | Example industry  | example.jpg  | Another headline  |
+  | industry         | image       | headline         |
+  | Example industry | example.jpg | Example headline |
+  | Example industry | example.jpg | Another headline |
 
 Given I am on the home page
 Then I should see the following industries:
   | ANOTHER INDUSTRY |
   | EXAMPLE INDUSTRY |
 And I should see the following "EXAMPLE INDUSTRY" stories:
-  | IMAGE       | HEADLINE          |
-  | example.jpg | Example headline  |
-  | example.jpg | Another headline  |
+  | IMAGE       | HEADLINE         |
+  | example.jpg | Example headline |
+  | example.jpg | Another headline |
 ```
 
 ```ruby
@@ -71,6 +72,10 @@ And I should see the following "EXAMPLE INDUSTRY" stories:
 
 Given "the following industries exist:" do |table|
   table.create! ConversationTable::Industry do
+    rename({
+      :wall_background => wall_background_file,
+      :table_background => table_background_file,
+    })
     file :wall_background_file, :table_background_file
   end
 end
@@ -78,6 +83,7 @@ end
 Given "the following stories exist:" do |table|
   table.create! factory_girl: "conversation_table/story" do
     belongs_to :industry, ConversationTable::Industry
+    rename :image => :image_file
     file :image_file
   end
 end

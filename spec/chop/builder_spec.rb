@@ -60,6 +60,15 @@ describe Chop::Builder do
       end
     end
 
+    describe "#rename" do
+      it "renames fields by hash map" do
+        records = described_class.build! table, klass do
+          rename :a => :b
+        end
+        expect(records).to eq [{"b" => 1}, {"b" => 2}]
+      end
+    end
+
     describe "#field" do
       it "adds a transformation to the build pipeline scoped to one field" do
         records = described_class.build! table, klass do

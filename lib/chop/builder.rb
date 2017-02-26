@@ -34,6 +34,14 @@ module Chop
       transformations << block
     end
 
+    def rename mappings
+      transformation do |attributes|
+        mappings.each do |old, new|
+          attributes[new.to_s] = attributes.delete(old.to_s) if attributes.key?(old.to_s)
+        end
+      end
+    end
+
     def field attribute, default: ""
       transformation do |attributes|
         attributes[attribute.to_s] = yield(attributes.fetch(attribute.to_s, default))
