@@ -2,42 +2,22 @@ require "chop/base"
 
 module Chop
   class Table < Base
+    private
+
     def default_selector
       "table"
     end
 
-    def header_elements
-      rows("thead")
-    end
-
-    def header
-      header_elements.map do |row|
-        row.all(:xpath, "./*").map(&:text)
+    def default_rows_finder
+      Proc.new do |root|
+        root.all("tr")
       end
     end
 
-    def body_elements
-      rows("tbody")
-    end
-
-    def body
-      body_elements.map do |row|
-        row_to_text(row)
+    def default_cells_finder
+      Proc.new do |row|
+        row.all("td,th")
       end
-    end
-
-    def base_to_a
-      header + body
-    end
-
-    private
-
-    def rows parent = nil
-      node.all("#{parent} tr")
-    end
-
-    def cells row
-      row.all(:xpath, "./*")
     end
   end
 end

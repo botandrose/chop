@@ -6,11 +6,15 @@ module Chop
       new(selector, table, session, block).diff!
     end
 
+    attr_accessor :rows_finder
+    attr_accessor :cells_finder
     attr_accessor :transformations
 
     def initialize selector = nil, table = nil, session = Capybara.current_session, block = nil, &other_block
       super
       self.selector ||= default_selector
+      self.rows_finder = default_rows_finder
+      self.cells_finder = default_cells_finder
       self.transformations = []
       instance_eval &block if block.respond_to?(:call)
       instance_eval &other_block if block_given?
@@ -18,12 +22,6 @@ module Chop
 
     def transformation &block
       transformations << block
-    end
-
-    def base_to_a
-      rows.collect do |row|
-        row_to_text(row)
-      end
     end
 
     def normalize
@@ -36,8 +34,22 @@ module Chop
       end
     end
 
+    def rows &block
+      self.rows_finder = block
+    end
+
+    def cells &block
+      self.cells_finder = block
+    end
+
+    def allow_not_found
+      @allow_not_found = true
+    end
+
     def to_a
-      results = base_to_a
+      results = rows_finder.call(root).map do |row|
+        row_to_text(row)
+      end
       normalize
       transformations.each { |transformation| transformation.call(results) }
       results
@@ -45,10 +57,6 @@ module Chop
 
     def diff! cucumber_table = table
       cucumber_table.diff! to_a
-    end
-
-    def allow_not_found
-      @allow_not_found = true
     end
 
     def hashes
@@ -61,8 +69,8 @@ module Chop
 
     private
 
-    def node
-      @node ||= begin
+    def root
+      @root ||= begin
         session.find(selector)
       rescue Capybara::ElementNotFound
         raise unless @allow_not_found
@@ -71,7 +79,7 @@ module Chop
     end
 
     def row_to_text row
-      cells(row).map do |cell|
+      cells_finder.call(row).map do |cell|
         cell_to_text(cell)
       end
     end
