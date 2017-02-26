@@ -1,30 +1,44 @@
 require "active_support/core_ext/object/blank"
       
 module Chop
-  class UnorderedList < Struct.new(:session)
-    def self.diff! table, &block
-      new.diff! table
+  class UnorderedList < Struct.new(:selector, :table, :session, :block)
+    def self.diff! selector, table, session: Capybara.current_session, &block
+      new(selector, table, session, block).diff!
     end
 
-    def initialize selector = "ul", session: Capybara.current_session
-      super(session)
-      @selector = selector
+    attr_accessor :transformations
+
+    def initialize selector = "ul", table = nil, session = Capybara.current_session, block = nil, &other_block
+      super
+      self.transformations = []
+      instance_eval &block if block.respond_to?(:call)
+      instance_eval &other_block if block_given?
     end
 
-    def to_a
+    def base_to_a
       rows.collect do |row|
         row_to_text(row)
       end
     end
 
     def normalized_to_a
-      raw = to_a
+      raw = base_to_a
       max = raw.map(&:count).max
       raw.select { |row| row.count == max }
     end
 
-    def diff! table
-      table.diff! normalized_to_a
+    def to_a
+      results = normalized_to_a
+      transformations.each { |transformation| transformation.call(results) }
+      results
+    end
+
+    def transformation &block
+      transformations << block
+    end
+
+    def diff! cucumber_table = table
+      cucumber_table.diff! to_a
     end
 
     private
@@ -34,7 +48,7 @@ module Chop
     end
 
     def node
-      @node ||= session.find(@selector)
+      @node ||= session.find(selector)
     end
 
     def row_to_text row

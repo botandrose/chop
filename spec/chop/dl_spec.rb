@@ -35,12 +35,12 @@ describe Chop::DefinitionList do
     end
 
     it "converts the selector to a table and diffs it with the supplied table" do
-      described_class.diff! table_from(dl)
+      described_class.diff! "dl", table_from(dl)
     end
 
     it "fails the diff when the tables are different" do
       expect {
-        described_class.diff! table_from([[]])
+        described_class.diff! "dl", table_from([[]])
       }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
     end
   end 

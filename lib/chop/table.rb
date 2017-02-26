@@ -1,34 +1,18 @@
-require "active_support/core_ext/class/attribute"
 require "active_support/core_ext/object/blank"
-      
+
 module Chop
-  class Table < Struct.new(:session)
-    def self.diff! table, &block
-      klass = Class.new(self) do
-        class_attribute :cell_transformers
-        self.cell_transformers = []
-
-        def self.cell index, &block
-          cell_transformers[index] = block
-        end
-
-        def cell_to_text cell, index
-          if transformer = cell_transformers[index]
-            transformer.call cell
-          else
-            super
-          end
-        end
-
-        instance_eval &block if block_given?
-      end
-
-      klass.new.diff! table
+  class Table < Struct.new(:selector, :table, :session, :block)
+    def self.diff! selector, table, session: Capybara.current_session, &block
+      new(selector, table, session, block).diff!
     end
 
-    def initialize selector = "table", session: Capybara.current_session
-      super(session)
-      @selector = selector
+    attr_accessor :transformations
+
+    def initialize(selector = "table", table = nil, session = Capybara.current_session, block = nil, &other_block)
+      super
+      self.transformations = []
+      instance_eval &block if block.respond_to?(:call)
+      instance_eval &other_block if block_given?
     end
 
     def header_elements
@@ -36,7 +20,7 @@ module Chop
     end
 
     def header
-      header_elements.collect do |row|
+      header_elements.map do |row|
         row.all(:xpath, "./*").map(&:text)
       end
     end
@@ -46,23 +30,45 @@ module Chop
     end
 
     def body
-      body_elements.collect do |row|
+      body_elements.map do |row|
         row_to_text(row)
       end
     end
 
-    def to_a
+    def base_to_a
       header + body
     end
 
     def normalized_to_a
-      raw = to_a
+      raw = base_to_a
       max = raw.map(&:count).max
       raw.select { |row| row.count == max }
     end
 
-    def diff! table
-      table.diff! normalized_to_a
+    def to_a
+      results = normalized_to_a
+      transformations.each { |transformation| transformation.call(results) }
+      results
+    end
+
+    def transformation &block
+      transformations << block
+    end
+
+    def diff! cucumber_table = table
+      cucumber_table.diff! to_a
+    end
+
+    def hashes
+      rows = to_a.dup
+      header = rows.shift
+      rows.map do |row|
+        Hash[header.zip(row)]
+      end
+    end
+
+    def allow_not_found
+      @allow_not_found = true
     end
 
     private
@@ -72,7 +78,12 @@ module Chop
     end
 
     def node
-      @node ||= session.find(@selector)
+      @node ||= begin
+        session.find(selector)
+      rescue Capybara::ElementNotFound
+        raise unless @allow_not_found
+        Capybara::Node::Simple.new("")
+      end
     end
 
     def row_to_text row

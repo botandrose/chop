@@ -4,10 +4,10 @@ module Chop
       Builder.build! table, klass, &block
     end
 
-    def diff! table, selector, session: Capybara.current_session, &block
+    def diff! selector, table, session: Capybara.current_session, &block
       class_name = session.find(selector).tag_name.capitalize
       klass = const_get("Chop::#{class_name}")
-      klass.diff! table, &block
+      klass.diff! selector, table, session: session, &block
     end
   end
 end
@@ -20,7 +20,7 @@ if defined?(Cucumber::MultilineArgument::DataTable)
 
     def diff! other_table, options={}, &block
       if other_table.is_a?(String) && !other_table.include?("|")
-        Chop.diff! self, other_table, &block
+        Chop.diff! other_table, self, &block
       else
         super
       end
