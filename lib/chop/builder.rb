@@ -16,8 +16,8 @@ module Chop
       instance_eval &other_block if block_given?
     end
 
-    def build!
-      table.hashes.map do |attributes|
+    def build! cucumber_table = table
+      cucumber_table.hashes.map do |attributes|
         transformations.each { |transformation| transformation.call(attributes) }
         if klass.is_a?(Hash)
           if factory = klass[:factory_girl]

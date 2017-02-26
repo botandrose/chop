@@ -17,18 +17,17 @@ describe Chop::Builder do
 
 
   describe "#build!" do
-    subject { described_class.new(table, klass) }
-
     it "creates a record for each row in the table" do
       expect(klass).to receive(:create!).with("a" => 1)
       expect(klass).to receive(:create!).with("a" => 2)
-      subject.build!
+      described_class.new(table, klass).build!
     end
 
     it "returns an array of created records" do
       record_1, record_2 = double, double
       allow(klass).to receive(:create!).and_return(record_1, record_2)
-      expect(subject.build!).to eq [record_1, record_2]
+      records = described_class.new(table, klass).build!
+      expect(records).to eq [record_1, record_2]
     end
 
     it "supports integration with FactoryGirl" do
@@ -37,6 +36,12 @@ describe Chop::Builder do
       allow(factory_girl).to receive(:create).with("factory_name", "a" => 1)
       allow(factory_girl).to receive(:create).with("factory_name", "a" => 2)
       described_class.new(table, factory_girl: "factory_name").build!
+    end
+
+    it "optionally can accept a table as an argument" do
+      expect(klass).to receive(:create!).with("a" => 1)
+      expect(klass).to receive(:create!).with("a" => 2)
+      described_class.new(nil, klass).build! table
     end
   end
 
