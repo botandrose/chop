@@ -9,10 +9,11 @@ module Chop
 
     attr_accessor :transformations
 
-    def initialize(*)
+    def initialize(*, &other_block)
       super
       self.transformations = []
       instance_eval &block if block.respond_to?(:call)
+      instance_eval &other_block if block_given?
     end
 
     def build!
