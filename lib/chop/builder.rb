@@ -77,7 +77,7 @@ module Chop
 
     def has_one key, klass=nil, name_field: :name
       field key do |name|
-        klass.find_by!(name_field => name)
+        klass.find_by!(name_field => name) if name.present?
       end
     end
     alias_method :belongs_to, :has_one

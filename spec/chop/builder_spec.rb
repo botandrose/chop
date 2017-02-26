@@ -81,15 +81,22 @@ describe Chop::Builder do
     end
 
     describe "#file" do
-      let(:table) { double(hashes: [{"image" => "example.jpg"}]) }
-
       it "treats the column as a file path and transforms it into the opened file" do
         file = double
         expect(File).to receive(:open).with("features/support/fixtures/example.jpg").and_return(file)
+        table = double(hashes: [{"image" => "example.jpg"}])
         records = described_class.build! table, klass do
           file(:image)
         end
         expect(records).to eq [{"image" => file}]
+      end
+
+      it "treats an empty value as nil" do
+        table = double(hashes: [{"image" => ""}])
+        records = described_class.build! table, klass do
+          file(:image)
+        end
+        expect(records).to eq [{"image" => nil}]
       end
     end
 
@@ -108,16 +115,24 @@ describe Chop::Builder do
     end
 
     describe "#has_one/#belongs_to" do
-      let(:table) { double(hashes: [{"user" => "Micah Geisel"}]) }
-
       it "treats the column as the name of a record of the specified class, and transforms it into that record" do
         user_class, micah = double, double
         allow(user_class).to receive(:find_by!).with(name: "Micah Geisel").and_return(micah)
         stub_const("User", user_class)
+        table = double(hashes: [{"user" => "Micah Geisel"}])
         records = described_class.build! table, klass do
           has_one(:user, User)
         end
         expect(records).to eq [{"user" => micah}]
+      end
+
+      it "treats an empty value as nil" do
+        stub_const("User", double)
+        table = double(hashes: [{"user" => ""}])
+        records = described_class.build! table, klass do
+          has_one(:user, User)
+        end
+        expect(records).to eq [{"user" => nil}]
       end
     end
 
