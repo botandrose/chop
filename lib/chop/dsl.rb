@@ -9,6 +9,10 @@ module Chop
       klass = const_get("Chop::#{class_name}")
       klass.diff! selector, table, session: session, &block
     end
+
+    def fill_in! table
+      Form.fill_in! table
+    end
   end
 end
 
@@ -24,6 +28,10 @@ if defined?(Cucumber::MultilineArgument::DataTable)
       else
         super
       end
+    end
+
+    def fill_in!
+      Chop.fill_in! self
     end
   }
 end
