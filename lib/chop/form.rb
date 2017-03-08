@@ -1,19 +1,98 @@
+require "active_support/core_ext/object/blank"
+require "active_support/core_ext/class/subclasses"
+
 module Chop
-  class Form < Struct.new(:table, :session)
-    def self.fill_in! table, session: Capybara.current_session
-      new(table, session).fill_in!
+  class Form < Struct.new(:table, :session, :path)
+    def self.fill_in! table, session: Capybara.current_session, path: "features/support/fixtures"
+      new(table, session, path).fill_in!
     end
 
     def fill_in!
       table.rows_hash.each do |label, value|
-        field = session.find_field(label)
-        if field.tag_name == "select"
-          session.select value, from: label
-        elsif field[:type] == "file"
-          session.attach_file label, "features/support/fixtures/#{value}"
-        else
-          session.fill_in label, with: value
+        Field.for(session, label, value, path).fill_in!
+      end
+    end
+
+    class Field < Struct.new(:session, :label, :value, :path)
+      def self.for *args
+        descendants.map do |klass|
+          klass.new(*args)
+        end.find(&:matches?)
+      end
+
+      private
+
+      def field
+        @field ||= session.find_field(label)
+      end
+    end
+
+    class MultipleSelect < Field
+      def matches?
+        field.tag_name == "select" && field[:multiple]
+      end
+
+      def fill_in!
+        field.all("option").map(&:text).each do |value|
+          session.unselect value, from: label
         end
+        value.split(", ").each do |value|
+          session.select value, from: label
+        end
+      end
+    end
+
+    class Select < Field
+      def matches?
+        field.tag_name == "select" && !field[:multiple]
+      end
+
+      def fill_in!
+        session.select value, from: label
+      end
+    end
+
+    class Checkbox < Field
+      def matches?
+        field[:type] == "checkbox"
+      end
+
+      def fill_in!
+        if value.present?
+          session.check label
+        else
+          session.uncheck label
+        end
+      end
+    end
+
+    class Radio < Field
+      def matches?
+        field[:type] == "radio"
+      end
+
+      def fill_in!
+        session.choose label
+      end
+    end
+
+    class File < Field
+      def matches?
+        field[:type] == "file"
+      end
+
+      def fill_in!
+        session.attach_file label, ::File.join(path, value)
+      end
+    end
+
+    class Default < Field
+      def matches?
+        true
+      end
+
+      def fill_in!
+        session.fill_in label, with: value
       end
     end
   end
