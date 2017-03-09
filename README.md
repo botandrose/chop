@@ -14,12 +14,13 @@ end
 
 ## Usage
 
-Chop monkeypatches Cucumber tables with two new methods:
+Chop monkeypatches Cucumber tables with three new methods:
 
 * `#build!`: Creates ActiveRecord instances. Also supports FactoryGirl.
 * `#diff!`: Enhances existing method to also accept a CSS selector. Currently supports diffing `<table>`, `<dl>`, and `<ul>`.
+* `#fill_in!`: Fills in a form on the current page.
 
-Both these methods accept blocks for customization.
+All these methods accept blocks for customization.
 
 ### Block methods for `#build!`:
 
@@ -42,6 +43,10 @@ All these methods are implemented in terms of the following low-level methods, u
 
 TODO: Pending API overhaul. 
 
+### Block methods for `#fill_in!`:
+
+TODO: Does this make sense?
+
 ### Example
 
 ```gherkin
@@ -58,6 +63,12 @@ Given the following stories exist:
   | Example industry | example.jpg | Another headline |
 
 Given I am on the home page
+
+When I fill in the following form:
+  | Name             | NEW industry  |
+  | Wall background  | NEW_wall.jpg  |
+  | Table background | NEW_table.jpg |
+
 Then I should see the following industries:
   | ANOTHER INDUSTRY |
   | EXAMPLE INDUSTRY |
@@ -88,6 +99,10 @@ Given "the following stories exist:" do |table|
   end
 end
 
+When "I fill in the following form:" do |table|
+  table.fill_in!
+end
+
 Then "I should see the following industries:" do |table|
   table.diff! "dl"
 end
@@ -106,6 +121,7 @@ Load `chop` before `cucumber` in your Gemfile, and call the two methods directly
 ```ruby
 Chop.build! table, Users
 Chop.diff! table, "table"
+Chop.fill_in! table
 ```
 
 ## Development
