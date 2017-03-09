@@ -65,6 +65,15 @@ describe Chop::Form do
 
       context "with non-standard labelling for groups" do
         it "chooses a radio button" do
+          session = test_app <<-SLIM
+            label for="f_p" F
+            input type="radio" value="P" name="f" id="f_p"
+            label for="f_p" P
+            input type="radio" value="V" name="f" id="f_v"
+            label for="f_v" V
+          SLIM
+          described_class.fill_in! table_from([["F", "V"]])
+          expect(session.find_field("f_v")).to be_checked
         end
       end
     end

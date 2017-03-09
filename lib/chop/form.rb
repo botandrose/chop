@@ -72,7 +72,23 @@ module Chop
       end
 
       def fill_in!
-        session.choose label
+        if nonstandard_labelling?
+          session.choose value
+        else
+          session.choose label
+        end
+      end
+
+      private
+
+      def nonstandard_labelling?
+        value_field[:name] == field[:name]
+      end
+
+      def value_field
+        session.find_field(value)
+      rescue Capybara::ElementNotFound
+        {}
       end
     end
 
