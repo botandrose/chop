@@ -52,9 +52,37 @@ module Chop
       end
     end
 
+    class MultipleCheckbox < Field
+      def matches?
+        field[:type] == "checkbox" && field[:name].to_s.end_with?("[]")
+      end
+
+      def fill_in!
+        checkboxes.each do |checkbox|
+          if checkbox_label_in_values? checkbox
+            session.check(checkbox[:id])
+          else
+            session.uncheck(checkbox[:id])
+          end
+        end
+      end
+
+      private
+
+      def checkboxes
+        session.all("[name='#{field[:name]}']")
+      end
+
+      def checkbox_label_in_values? checkbox
+        values = value.split(", ")
+        labels = session.all("label[for='#{checkbox[:id]}']").map(&:text)
+        (values & labels).any?
+      end
+    end
+
     class Checkbox < Field
       def matches?
-        field[:type] == "checkbox"
+        field[:type] == "checkbox" && !field[:name].to_s.end_with?("[]")
       end
 
       def fill_in!

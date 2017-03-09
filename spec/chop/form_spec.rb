@@ -98,8 +98,34 @@ describe Chop::Form do
       end
 
       context "with non-standard labelling for groups" do
-        it "checks a checkbox"
-        it "checks multiple checkboxes"
+        it "checks a checkbox" do
+          session = test_app <<-SLIM
+            label for="f_p" F
+            input type="checkbox" value="P" name="f[]" id="f_p"
+            label for="f_p" P
+            input type="checkbox" value="V" name="f[]" id="f_v"
+            label for="f_v" V
+          SLIM
+          described_class.fill_in! table_from([["F", "V"]])
+          expect(session.find_field("f_p")).to_not be_checked
+          expect(session.find_field("f_v")).to be_checked
+        end
+
+        it "checks multiple checkboxes" do
+          session = test_app <<-SLIM
+            label for="f_p" F
+            input type="checkbox" value="P" name="f[]" id="f_p"
+            label for="f_p" P
+            input type="checkbox" value="V" name="f[]" id="f_v"
+            label for="f_v" V
+            input type="checkbox" value="W" name="f[]" id="f_w"
+            label for="f_w" W
+          SLIM
+          described_class.fill_in! table_from([["F", "V, W"]])
+          expect(session.find_field("f_p")).to_not be_checked
+          expect(session.find_field("f_v")).to be_checked
+          expect(session.find_field("f_w")).to be_checked
+        end
       end
     end
 
