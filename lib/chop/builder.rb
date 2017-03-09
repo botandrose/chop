@@ -44,6 +44,10 @@ module Chop
     end
 
     def field attribute, default: ""
+      if attribute.is_a?(Hash)
+        rename attribute
+        attribute = attribute.values.first
+      end
       transformation do |attributes|
         attributes[attribute.to_s] = yield(attributes.fetch(attribute.to_s, default))
       end
@@ -58,7 +62,13 @@ module Chop
       end
     end
 
-    def file *keys, path: "features/support/fixtures"
+    def file *keys
+      if keys.last.is_a?(Hash) && keys.length > 1
+        options = keys.pop
+        path = options[:path]
+      end
+      path ||= "features/support/fixtures"
+
       keys.each do |key|
         field key do |file|
           File.open(File.join(path, file)) if file.present?
@@ -66,7 +76,15 @@ module Chop
       end
     end
 
-    def files *keys, path: "features/support/fixtures", delimiter: " "
+    def files *keys
+      if keys.last.is_a?(Hash) && keys.length > 1
+        options = keys.pop
+        path = options[:path]
+        delimiter = options[:delimiter]
+      end
+      path ||= "features/support/fixtures"
+      delimiter ||= " "
+
       keys.each do |key|
         field key do |paths|
           paths.split(delimiter).map do |file|

@@ -81,6 +81,13 @@ describe Chop::Builder do
         end
         expect(records).to eq [{"a" => 2}, {"a" => 4}]
       end
+
+      it "supports syntactic sugar for renaming on the fly" do
+        records = described_class.build! table, klass do
+          field(:a => :b) { |a| a * 2 }
+        end
+        expect(records).to eq [{"b" => 2}, {"b" => 4}]
+      end
     end
 
     describe "#underscore_keys" do
@@ -112,6 +119,36 @@ describe Chop::Builder do
         end
         expect(records).to eq [{"image" => nil}]
       end
+
+      it "allows configuration of the path" do
+        file = double
+        expect(File).to receive(:open).with("tmp/example.jpg").and_return(file)
+        table = double(hashes: [{"image" => "example.jpg"}])
+        records = described_class.build! table, klass do
+          file(:image, path: "tmp")
+        end
+        expect(records).to eq [{"image" => file}]
+      end
+
+      it "supports syntactic sugar for renaming on the fly" do
+        file = double
+        expect(File).to receive(:open).with("features/support/fixtures/example.jpg").and_return(file)
+        table = double(hashes: [{"image" => "example.jpg"}])
+        records = described_class.build! table, klass do
+          file(:image => :image_file)
+        end
+        expect(records).to eq [{"image_file" => file}]
+      end
+
+      it "allows configuration of the path with renaming syntax" do
+        file = double
+        expect(File).to receive(:open).with("tmp/example.jpg").and_return(file)
+        table = double(hashes: [{"image" => "example.jpg"}])
+        records = described_class.build! table, klass do
+          file({ :image => :image_file }, path: "tmp")
+        end
+        expect(records).to eq [{"image_file" => file}]
+      end
     end
 
     describe "#files" do
@@ -126,6 +163,39 @@ describe Chop::Builder do
         end
         expect(records).to eq [{"images" => [file_1, file_2]}]
       end
+
+      it "allows configuration of the path and delimiter" do
+        table =  double(hashes: [{"images" => "example.jpg, example.png"}])
+        file_1, file_2 = double, double
+        expect(File).to receive(:open).with("tmp/example.jpg").and_return(file_1)
+        expect(File).to receive(:open).with("tmp/example.png").and_return(file_2)
+        records = described_class.build! table, klass do
+          files(:images, path: "tmp", delimiter: ", ")
+        end
+        expect(records).to eq [{"images" => [file_1, file_2]}]
+      end
+
+      it "supports syntactic sugar for renaming on the fly" do
+        file_1, file_2 = double, double
+        expect(File).to receive(:open).with("features/support/fixtures/example.jpg").and_return(file_1)
+        expect(File).to receive(:open).with("features/support/fixtures/example.png").and_return(file_2)
+        records = described_class.build! table, klass do
+          files(:images => :image_files)
+        end
+        expect(records).to eq [{"image_files" => [file_1, file_2]}]
+      end
+
+      it "allows configuration of the path and delimiter with renaming syntax" do
+        table =  double(hashes: [{"images" => "example.jpg, example.png"}])
+        file_1, file_2 = double, double
+        expect(File).to receive(:open).with("tmp/example.jpg").and_return(file_1)
+        expect(File).to receive(:open).with("tmp/example.png").and_return(file_2)
+        records = described_class.build! table, klass do
+          files({ :images => :image_files }, path: "tmp", delimiter: ", ")
+        end
+        expect(records).to eq [{"image_files" => [file_1, file_2]}]
+      end
+
     end
 
     describe "#has_one/#belongs_to" do
@@ -148,6 +218,17 @@ describe Chop::Builder do
         end
         expect(records).to eq [{"user" => nil}]
       end
+
+      it "supports syntactic sugar for renaming on the fly" do
+        user_class, micah = double, double
+        allow(user_class).to receive(:find_by!).with(name: "Micah Geisel").and_return(micah)
+        stub_const("User", user_class)
+        table = double(hashes: [{"user" => "Micah Geisel"}])
+        records = described_class.build! table, klass do
+          has_one({ :user => :admin }, User)
+        end
+        expect(records).to eq [{"admin" => micah}]
+      end
     end
 
     describe "#has_many" do
@@ -162,6 +243,17 @@ describe Chop::Builder do
           has_many(:users, User)
         end
         expect(records).to eq [{"users" => [micah, michael]}]
+      end
+
+      it "supports syntactic sugar for renaming on the fly" do
+        user_class, micah, michael = double, double, double
+        allow(user_class).to receive(:find_by!).with(name: "Micah Geisel").and_return(micah)
+        allow(user_class).to receive(:find_by!).with(name: "Michael Gubitosa").and_return(michael)
+        stub_const("User", user_class)
+        records = described_class.build! table, klass do
+          has_many({ :users => :admins }, User)
+        end
+        expect(records).to eq [{"admins" => [micah, michael]}]
       end
     end
   end

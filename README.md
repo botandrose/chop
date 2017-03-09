@@ -94,8 +94,12 @@ end
 Given "the following stories exist:" do |table|
   table.create! factory_girl: "conversation_table/story" do
     belongs_to :industry, ConversationTable::Industry
+
     rename :image => :image_file
     file :image_file
+
+    # The previous two lines can also be expressed as:
+    file :image => :image_file
   end
 end
 
