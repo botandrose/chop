@@ -63,11 +63,10 @@ module Chop
     end
 
     def file *keys
-      if keys.last.is_a?(Hash) && keys.length > 1
-        options = keys.pop
-        path = options[:path]
-      end
-      path ||= "features/support/fixtures"
+      options = extract_options!(keys)
+      path = options.fetch(:path, "features/support/fixtures")
+
+      handle_renames! keys
 
       keys.each do |key|
         field key do |file|
@@ -77,13 +76,11 @@ module Chop
     end
 
     def files *keys
-      if keys.last.is_a?(Hash) && keys.length > 1
-        options = keys.pop
-        path = options[:path]
-        delimiter = options[:delimiter]
-      end
-      path ||= "features/support/fixtures"
-      delimiter ||= " "
+      options = extract_options!(keys)
+      path = options.fetch(:path, "features/support/fixtures")
+      delimiter = options.fetch(:delimiter, " ")
+
+      handle_renames! keys
 
       keys.each do |key|
         field key do |paths|
@@ -108,6 +105,23 @@ module Chop
       end
     end
     alias_method :belongs_to, :has_one
+
+    private
+
+    def extract_options! keys
+      if keys.last.is_a?(Hash) && keys.length > 1
+        keys.pop
+      else
+        {}
+      end
+    end
+
+    def handle_renames! keys
+      if keys.first.is_a?(Hash) && keys.length == 1
+        rename keys.first
+        keys.replace keys.first.values
+      end
+    end
   end
 end
 

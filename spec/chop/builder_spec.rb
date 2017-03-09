@@ -131,13 +131,14 @@ describe Chop::Builder do
       end
 
       it "supports syntactic sugar for renaming on the fly" do
-        file = double
-        expect(File).to receive(:open).with("features/support/fixtures/example.jpg").and_return(file)
-        table = double(hashes: [{"image" => "example.jpg"}])
+        image, icon = double, double
+        expect(File).to receive(:open).with("features/support/fixtures/image.jpg").and_return(image)
+        expect(File).to receive(:open).with("features/support/fixtures/icon.jpg").and_return(icon)
+        table = double(hashes: [{"image" => "image.jpg", "icon" => "icon.jpg"}])
         records = described_class.build! table, klass do
-          file(:image => :image_file)
+          file(:image => :image_file, :icon => :icon_file)
         end
-        expect(records).to eq [{"image_file" => file}]
+        expect(records).to eq [{"image_file" => image, "icon_file" => icon}]
       end
 
       it "allows configuration of the path with renaming syntax" do
@@ -165,7 +166,7 @@ describe Chop::Builder do
       end
 
       it "allows configuration of the path and delimiter" do
-        table =  double(hashes: [{"images" => "example.jpg, example.png"}])
+        table = double(hashes: [{"images" => "example.jpg, example.png"}])
         file_1, file_2 = double, double
         expect(File).to receive(:open).with("tmp/example.jpg").and_return(file_1)
         expect(File).to receive(:open).with("tmp/example.png").and_return(file_2)
@@ -176,13 +177,16 @@ describe Chop::Builder do
       end
 
       it "supports syntactic sugar for renaming on the fly" do
-        file_1, file_2 = double, double
-        expect(File).to receive(:open).with("features/support/fixtures/example.jpg").and_return(file_1)
-        expect(File).to receive(:open).with("features/support/fixtures/example.png").and_return(file_2)
+        table = double(hashes: [{"images" => "image.jpg image.png", "icons" => "icon.jpg icon.png"}])
+        image_1, image_2, icon_1, icon_2 = double, double, double, double
+        expect(File).to receive(:open).with("features/support/fixtures/image.jpg").and_return(image_1)
+        expect(File).to receive(:open).with("features/support/fixtures/image.png").and_return(image_2)
+        expect(File).to receive(:open).with("features/support/fixtures/icon.jpg").and_return(icon_1)
+        expect(File).to receive(:open).with("features/support/fixtures/icon.png").and_return(icon_2)
         records = described_class.build! table, klass do
-          files(:images => :image_files)
+          files(:images => :image_files, :icons => :icon_files)
         end
-        expect(records).to eq [{"image_files" => [file_1, file_2]}]
+        expect(records).to eq [{"image_files" => [image_1, image_2], "icon_files" => [icon_1, icon_2]}]
       end
 
       it "allows configuration of the path and delimiter with renaming syntax" do
