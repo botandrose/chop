@@ -13,17 +13,12 @@ module Chop
       end
     end
 
-    class Field < Struct.new(:session, :label, :value, :path)
-      def self.for *args
+    class Field < Struct.new(:session, :label, :value, :path, :field)
+      def self.for session, label, value, path
+        field = session.find_field(label)
         descendants.map do |klass|
-          klass.new(*args)
+          klass.new(session, label, value, path, field)
         end.find(&:matches?)
-      end
-
-      private
-
-      def field
-        @field ||= session.find_field(label)
       end
     end
 
@@ -59,11 +54,7 @@ module Chop
 
       def fill_in!
         checkboxes.each do |checkbox|
-          if checkbox_label_in_values? checkbox
-            session.check(checkbox[:id])
-          else
-            session.uncheck(checkbox[:id])
-          end
+          checkbox.set checkbox_label_in_values?(checkbox)
         end
       end
 
@@ -86,11 +77,7 @@ module Chop
       end
 
       def fill_in!
-        if value.present?
-          session.check label
-        else
-          session.uncheck label
-        end
+        field.set value.present?
       end
     end
 
@@ -126,7 +113,7 @@ module Chop
       end
 
       def fill_in!
-        session.attach_file label, ::File.join(path, value)
+        field.set ::File.join(path, value)
       end
     end
 
@@ -136,7 +123,7 @@ module Chop
       end
 
       def fill_in!
-        session.fill_in label, with: value
+        field.set value
       end
     end
   end
