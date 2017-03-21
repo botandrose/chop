@@ -1,5 +1,6 @@
 require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/object/blank"
+require "active_support/core_ext/class/attribute"
 
 module Chop
   class Base < Struct.new(:selector, :table, :session, :block)
@@ -7,16 +8,28 @@ module Chop
       new(selector, table, session, block).diff!
     end
 
-    attr_accessor :rows_finder
-    attr_accessor :cells_finder
-    attr_accessor :header_transformations
-    attr_accessor :transformations
+    class_attribute :default_selector, :rows_finder, :cells_finder, :text_finder
+
+    self.rows_finder = -> { raise "Missing rows finder!" }
+    self.cells_finder = -> { raise "Missing cells finder!" }
+    self.text_finder = ->(cell) { cell.text }
+
+    def self.text_or_image_alt_finder
+      ->(cell) do
+        text = cell.text
+        if text.blank? && image = cell.first("img")
+          image["alt"]
+        else
+          text
+        end
+      end
+    end
+
+    attr_accessor :header_transformations, :transformations
 
     def initialize selector = nil, table = nil, session = Capybara.current_session, block = nil, &other_block
       super
       self.selector ||= default_selector
-      self.rows_finder = default_rows_finder
-      self.cells_finder = default_cells_finder
       self.header_transformations = []
       self.transformations = []
       instance_eval &block if block.respond_to?(:call)
@@ -32,7 +45,7 @@ module Chop
         header_transformation do |row|
           if index.is_a?(Symbol)
             index = row.index do |cell|
-              cell.text.parameterize.underscore.to_sym == index
+              text_finder.call(cell).parameterize.underscore.to_sym == index
             end
           end
           row[index] = yield(row[index])
@@ -91,29 +104,33 @@ module Chop
       self.cells_finder = block
     end
 
+    def text &block
+      self.text_finder = block
+    end
+
     def allow_not_found
       @allow_not_found = true
     end
 
     def to_a
-      results = rows_finder.call(root).map { |row| cells_finder.call(row).to_a }
-      results = normalize(results)
+      rows = rows_finder.call(root).map { |row| cells_finder.call(row).to_a }
+      rows = normalize(rows)
 
-      header = @new_header ? normalize([@new_header]).first : results.shift
+      header = @new_header ? normalize([@new_header]).first : rows.shift
       header_transformations.each do |transformation|
         transformation.call(header)
         header = normalize([header]).first
       end
 
-      results = [header] + results
+      rows = [header] + rows
 
       transformations.each do |transformation|
-        transformation.call(results)
-        results = normalize(results)
+        transformation.call(rows)
+        rows = normalize(rows)
       end
 
-      results.map do |row|
-        row.map(&:text)
+      rows.map do |row|
+        row.map { |cell| text_finder.call(cell) }
       end
     end
 

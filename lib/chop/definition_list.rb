@@ -2,6 +2,10 @@ require "chop/base"
       
 module Chop
   class DefinitionList < Base
+    self.default_selector = "dl"
+    self.rows_finder = ->(root) { root.all("dfn") }
+    self.cells_finder = ->(row) { row.all("dt,dd") }
+
     def column index, &block
       transformation do |raw|
         raw.map!.with_index do |row, row_index|
@@ -19,24 +23,6 @@ module Chop
         new_header << "" while new_header.length < (raw.first.try(:length) || 0)
         raw.unshift new_header
         raw
-      end
-    end
-
-    private
-
-    def default_selector
-      "dl"
-    end
-
-    def default_rows_finder
-      Proc.new do |root|
-        root.all("dfn")
-      end
-    end
-
-    def default_cells_finder
-      Proc.new do |row|
-        row.all("dt,dd")
       end
     end
   end

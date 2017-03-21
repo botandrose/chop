@@ -158,6 +158,41 @@ describe Chop::Table do
       end
     end
 
+    describe "#text" do
+      let(:body) do
+        slim """
+          table
+            thead
+              tr
+                th A
+                th B
+            tbody
+              tr
+                td 1
+                td 2
+              tr
+                td 2
+                td 3
+        """
+      end
+
+      let(:table) do
+        [
+          ["A!","B!"],
+          ["1!","2!"],
+          ["2!","3!"],
+        ]
+      end
+
+      it "overrides existing default text finder" do
+        described_class.diff! "table", table_from(table) do
+          text do |cell|
+            cell.text + "!"
+          end
+        end
+      end
+    end
+
     describe "#allow_not_found" do
       # FIXME bug in cucumber table implementation
       xit "permits the table to be missing" do

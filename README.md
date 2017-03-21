@@ -41,12 +41,13 @@ All these methods are implemented in terms of the following low-level methods, u
 
 ### Block methods for `#diff!`:
 
-Transform the table of Capybara node before converting them to text and passing to `diff!`.
+Transform the table of Capybara nodes before converting them to text and passing to `diff!`.
 
 Overide Capybara finders:
 * `#rows`: overrides existing default row finder.
 * `#cells`: overrides existing default cell finder.
-* `#allow_not_found`: permits the table to be missing.
+* `#text`: overrides existing default text finder.
+* `#allow_not_found`: diffing against a missing element will diff against `[[]]` instead of raising an exception.
 
 High-level declarative transformations:
 * `#image`: Replaces the specified cell with the alt text of the first image within it.
