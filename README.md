@@ -36,12 +36,27 @@ High-level declarative transformations:
 * `#rename`: Renames one or more fields.
 
 All these methods are implemented in terms of the following low-level methods, useful for when you need more control over the transformation:
-* `#field`: performs transformations on a specific field value.
+* `#field`: performs transformations on a specific oield value.
 * `#transformation`: performs transformations on the attributes hash.
 
 ### Block methods for `#diff!`:
 
-TODO: Pending API overhaul. 
+Transform the table of Capybara node before converting them to text and passing to `diff!`.
+
+Overide Capybara finders:
+* `#rows`: overrides existing default row finder.
+* `#cells`: overrides existing default cell finder.
+* `#allow_not_found`: permits the table to be missing.
+
+High-level declarative transformations:
+* `#image`: Replaces the specified cell with the alt text of the first image within it.
+
+All these methods are implemented in terms of the following low-level methods, useful for when you need more control over the transformation:
+* `#header`: add or transform the table header, depending on block arity.
+* `#header(key)`: transform the specified header column, specified either by numeric index, or by hash key.
+* `#field`: performs transformations on a specific field value.
+* `#hash_transformation`: performs arbitrary transformations on an array of hashes constructed by assuming a header row. Hash keys are downcased and underscored.
+* `#transformation`: performs arbitrary transformations on the 2d array of Capybara nodes.
 
 ### Block methods for `#fill_in!`:
 
@@ -113,7 +128,9 @@ end
 
 Then /^I should see the following "(.+?)" stories:$/ do |industry_name, table|
   within "dfn", text: industry_name do
-    table.diff! "table"
+    table.diff! "table" do
+      image :image
+    end
   end
 end
 ```
