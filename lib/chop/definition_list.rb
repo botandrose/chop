@@ -1,7 +1,7 @@
-require "chop/base"
+require "chop/diff"
       
 module Chop
-  class DefinitionList < Base
+  class DefinitionList < Diff
     self.default_selector = "dl"
     self.rows_finder = ->(root) { root.all("dfn") }
     self.cells_finder = ->(row) { row.all("dt,dd") }

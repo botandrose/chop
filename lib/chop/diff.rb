@@ -3,7 +3,7 @@ require "active_support/core_ext/object/blank"
 require "active_support/core_ext/class/attribute"
 
 module Chop
-  class Base < Struct.new(:selector, :table, :session, :block)
+  class Diff < Struct.new(:selector, :table, :session, :block)
     def self.diff! selector, table, session: Capybara.current_session, &block
       new(selector, table, session, block).diff!
     end
