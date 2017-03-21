@@ -1,13 +1,13 @@
-require "chop/builder"
+require "chop/create"
 
-describe Chop::Builder do
-  describe ".build!" do
-    it "delegates to new(*args).build!" do
+describe Chop::Create do
+  describe ".create!" do
+    it "delegates to new(*args).create!" do
       table, klass, block = double, double, Proc.new {}
-      builder = double
-      expect(described_class).to receive(:new).with(table, klass, block).and_return(builder)
-      expect(builder).to receive(:build!)
-      described_class.build! table, klass, &block
+      create = double
+      expect(described_class).to receive(:new).with(table, klass, block).and_return(create)
+      expect(create).to receive(:create!)
+      described_class.create! table, klass, &block
     end
   end
 
@@ -16,17 +16,17 @@ describe Chop::Builder do
   let(:klass) { double }
 
 
-  describe "#build!" do
+  describe "#create!" do
     it "creates a record for each row in the table" do
       expect(klass).to receive(:create!).with("a" => 1)
       expect(klass).to receive(:create!).with("a" => 2)
-      described_class.new(table, klass).build!
+      described_class.new(table, klass).create!
     end
 
     it "returns an array of created records" do
       record_1, record_2 = double, double
       allow(klass).to receive(:create!).and_return(record_1, record_2)
-      records = described_class.new(table, klass).build!
+      records = described_class.new(table, klass).create!
       expect(records).to eq [record_1, record_2]
     end
 
@@ -35,13 +35,13 @@ describe Chop::Builder do
       stub_const("FactoryGirl", factory_girl)
       allow(factory_girl).to receive(:create).with("factory_name", "a" => 1)
       allow(factory_girl).to receive(:create).with("factory_name", "a" => 2)
-      described_class.new(table, factory_girl: "factory_name").build!
+      described_class.new(table, factory_girl: "factory_name").create!
     end
 
     it "optionally can accept a table as an argument" do
       expect(klass).to receive(:create!).with("a" => 1)
       expect(klass).to receive(:create!).with("a" => 2)
-      described_class.new(nil, klass).build! table
+      described_class.new(nil, klass).create! table
     end
   end
 
@@ -55,8 +55,8 @@ describe Chop::Builder do
     end
 
     describe "#transformation" do
-      it "adds a transformation to the build pipeline" do
-        records = described_class.build! table, klass do
+      it "adds a transformation to the create pipeline" do
+        records = described_class.create! table, klass do
           transformation do |attributes|
             attributes["a"] *= 2
           end
@@ -67,7 +67,7 @@ describe Chop::Builder do
 
     describe "#rename" do
       it "renames fields by hash map" do
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           rename :a => :b
         end
         expect(records).to eq [{"b" => 1}, {"b" => 2}]
@@ -75,15 +75,15 @@ describe Chop::Builder do
     end
 
     describe "#field" do
-      it "adds a transformation to the build pipeline scoped to one field" do
-        records = described_class.build! table, klass do
+      it "adds a transformation to the create pipeline scoped to one field" do
+        records = described_class.create! table, klass do
           field(:a) { |a| a * 2 }
         end
         expect(records).to eq [{"a" => 2}, {"a" => 4}]
       end
 
       it "supports syntactic sugar for renaming on the fly" do
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           field(:a => :b) { |a| a * 2 }
         end
         expect(records).to eq [{"b" => 2}, {"b" => 4}]
@@ -93,8 +93,8 @@ describe Chop::Builder do
     describe "#underscore_keys" do
       let(:table) { double(hashes: [{"First Name" => "Micah"}, {"Last Name" => "Geisel"}]) }
 
-      it "adds a transformation to the build pipeline scoped to one field" do
-        records = described_class.build! table, klass do
+      it "adds a transformation to the create pipeline scoped to one field" do
+        records = described_class.create! table, klass do
           underscore_keys
         end
         expect(records).to eq [{"first_name" => "Micah"}, {"last_name" => "Geisel"}]
@@ -106,7 +106,7 @@ describe Chop::Builder do
         file = double
         expect(File).to receive(:open).with("features/support/fixtures/example.jpg").and_return(file)
         table = double(hashes: [{"image" => "example.jpg"}])
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           file(:image)
         end
         expect(records).to eq [{"image" => file}]
@@ -114,7 +114,7 @@ describe Chop::Builder do
 
       it "treats an empty value as nil" do
         table = double(hashes: [{"image" => ""}])
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           file(:image)
         end
         expect(records).to eq [{"image" => nil}]
@@ -124,7 +124,7 @@ describe Chop::Builder do
         file = double
         expect(File).to receive(:open).with("tmp/example.jpg").and_return(file)
         table = double(hashes: [{"image" => "example.jpg"}])
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           file(:image, path: "tmp")
         end
         expect(records).to eq [{"image" => file}]
@@ -135,7 +135,7 @@ describe Chop::Builder do
         expect(File).to receive(:open).with("features/support/fixtures/image.jpg").and_return(image)
         expect(File).to receive(:open).with("features/support/fixtures/icon.jpg").and_return(icon)
         table = double(hashes: [{"image" => "image.jpg", "icon" => "icon.jpg"}])
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           file(:image => :image_file, :icon => :icon_file)
         end
         expect(records).to eq [{"image_file" => image, "icon_file" => icon}]
@@ -145,7 +145,7 @@ describe Chop::Builder do
         file = double
         expect(File).to receive(:open).with("tmp/example.jpg").and_return(file)
         table = double(hashes: [{"image" => "example.jpg"}])
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           file({ :image => :image_file }, path: "tmp")
         end
         expect(records).to eq [{"image_file" => file}]
@@ -159,7 +159,7 @@ describe Chop::Builder do
         file_1, file_2 = double, double
         expect(File).to receive(:open).with("features/support/fixtures/example.jpg").and_return(file_1)
         expect(File).to receive(:open).with("features/support/fixtures/example.png").and_return(file_2)
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           files(:images)
         end
         expect(records).to eq [{"images" => [file_1, file_2]}]
@@ -170,7 +170,7 @@ describe Chop::Builder do
         file_1, file_2 = double, double
         expect(File).to receive(:open).with("tmp/example.jpg").and_return(file_1)
         expect(File).to receive(:open).with("tmp/example.png").and_return(file_2)
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           files(:images, path: "tmp", delimiter: ", ")
         end
         expect(records).to eq [{"images" => [file_1, file_2]}]
@@ -183,7 +183,7 @@ describe Chop::Builder do
         expect(File).to receive(:open).with("features/support/fixtures/image.png").and_return(image_2)
         expect(File).to receive(:open).with("features/support/fixtures/icon.jpg").and_return(icon_1)
         expect(File).to receive(:open).with("features/support/fixtures/icon.png").and_return(icon_2)
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           files(:images => :image_files, :icons => :icon_files)
         end
         expect(records).to eq [{"image_files" => [image_1, image_2], "icon_files" => [icon_1, icon_2]}]
@@ -194,7 +194,7 @@ describe Chop::Builder do
         file_1, file_2 = double, double
         expect(File).to receive(:open).with("tmp/example.jpg").and_return(file_1)
         expect(File).to receive(:open).with("tmp/example.png").and_return(file_2)
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           files({ :images => :image_files }, path: "tmp", delimiter: ", ")
         end
         expect(records).to eq [{"image_files" => [file_1, file_2]}]
@@ -208,7 +208,7 @@ describe Chop::Builder do
         allow(user_class).to receive(:find_by!).with(name: "Micah Geisel").and_return(micah)
         stub_const("User", user_class)
         table = double(hashes: [{"user" => "Micah Geisel"}])
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           has_one(:user, User)
         end
         expect(records).to eq [{"user" => micah}]
@@ -217,7 +217,7 @@ describe Chop::Builder do
       it "treats an empty value as nil" do
         stub_const("User", double)
         table = double(hashes: [{"user" => ""}])
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           has_one(:user, User)
         end
         expect(records).to eq [{"user" => nil}]
@@ -228,7 +228,7 @@ describe Chop::Builder do
         allow(user_class).to receive(:find_by!).with(name: "Micah Geisel").and_return(micah)
         stub_const("User", user_class)
         table = double(hashes: [{"user" => "Micah Geisel"}])
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           has_one({ :user => :admin }, User)
         end
         expect(records).to eq [{"admin" => micah}]
@@ -243,7 +243,7 @@ describe Chop::Builder do
         allow(user_class).to receive(:find_by!).with(name: "Micah Geisel").and_return(micah)
         allow(user_class).to receive(:find_by!).with(name: "Michael Gubitosa").and_return(michael)
         stub_const("User", user_class)
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           has_many(:users, User)
         end
         expect(records).to eq [{"users" => [micah, michael]}]
@@ -254,7 +254,7 @@ describe Chop::Builder do
         allow(user_class).to receive(:find_by!).with(name: "Micah Geisel").and_return(micah)
         allow(user_class).to receive(:find_by!).with(name: "Michael Gubitosa").and_return(michael)
         stub_const("User", user_class)
-        records = described_class.build! table, klass do
+        records = described_class.create! table, klass do
           has_many({ :users => :admins }, User)
         end
         expect(records).to eq [{"admins" => [micah, michael]}]

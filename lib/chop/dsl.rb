@@ -1,7 +1,7 @@
 module Chop
   module DSL
     def create! table, klass, &block
-      Builder.build! table, klass, &block
+      Create.create! table, klass, &block
     end
 
     def diff! selector, table, session: Capybara.current_session, &block

@@ -8,10 +8,10 @@ describe Chop::DSL do
   end
 
   describe ".create!" do
-    it "delegates to Chop::Builder.build!" do
+    it "delegates to Chop::Create.create!" do
       table, klass, block = double, double, Proc.new {}
-      builder = stub_const "Chop::Builder", double
-      expect(builder).to receive(:build!).with(table, klass, &block)
+      create = stub_const "Chop::Create", double
+      expect(create).to receive(:create!).with(table, klass, &block)
       subject.create! table, klass, &block
     end
   end

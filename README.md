@@ -16,13 +16,13 @@ end
 
 Chop monkeypatches Cucumber tables with three new methods:
 
-* `#build!`: Creates ActiveRecord instances. Also supports FactoryGirl.
+* `#create!`: Creates ActiveRecord instances. Also supports FactoryGirl.
 * `#diff!`: Enhances existing method to also accept a CSS selector. Currently supports diffing `<table>`, `<dl>`, and `<ul>`.
 * `#fill_in!`: Fills in a form on the current page.
 
 All these methods accept blocks for customization.
 
-### Block methods for `#build!`:
+### Block methods for `#create!`:
 
 Transform the attributes hash derived from the table before passing to `ActiveRecord.create!`.
 
@@ -141,7 +141,7 @@ end
 Load `chop` before `cucumber` in your Gemfile, and call the two methods directly on the `Chop` module, passing the cucumber table in as the first argument.
 
 ```ruby
-Chop.build! table, Users
+Chop.create! table, Users
 Chop.diff! table, "table"
 Chop.fill_in! table
 ```

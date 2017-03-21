@@ -2,9 +2,9 @@ require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/object/blank"
 
 module Chop
-  class Builder < Struct.new(:table, :klass, :block)
-    def self.build! table, klass, &block
-      new(table, klass, block).build!
+  class Create < Struct.new(:table, :klass, :block)
+    def self.create! table, klass, &block
+      new(table, klass, block).create!
     end
 
     attr_accessor :transformations
@@ -16,7 +16,7 @@ module Chop
       instance_eval &other_block if block_given?
     end
 
-    def build! cucumber_table = table
+    def create! cucumber_table = table
       cucumber_table.hashes.map do |attributes|
         transformations.each { |transformation| transformation.call(attributes) }
         if klass.is_a?(Hash)
