@@ -43,6 +43,22 @@ describe Chop::DefinitionList do
         described_class.diff! "dl", table_from([[]])
       }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
     end
+
+    describe "block methods" do
+      describe "#column" do
+        it "transforms a column by index" do
+          dl = [
+            ["A", "2"],
+            ["B", "4"],
+          ]
+          described_class.diff! "dl", table_from(dl) do
+            column 1 do |cell|
+              cell.text.to_i * 2
+            end
+          end
+        end
+      end
+    end
   end 
 
   def table_from table
