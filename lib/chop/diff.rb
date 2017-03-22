@@ -122,7 +122,7 @@ module Chop
         header = normalize([header]).first
       end
 
-      rows = [header] + rows
+      rows = [header] + rows if header
 
       transformations.each do |transformation|
         transformation.call(rows)
