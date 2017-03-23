@@ -103,6 +103,75 @@ describe Chop::Table do
         described_class.diff! "table", table_from(table)
       end
     end
+
+    context "with empty table" do
+      let(:body) do
+        slim """
+          table
+            thead
+              tr
+                th A
+                th B
+            tbody
+              tr
+                td 1
+              tr
+                td 2
+        """
+      end
+
+      let(:table) do
+        [
+          ["A", "B"],
+          ["1", ""],
+          ["2", ""],
+        ]
+      end
+
+      it "is cool with diffing a non-existent table" do
+        described_class.diff! "#doesnt_exist", table_from([[]]) do
+          allow_not_found
+        end
+      end
+
+      it "fails the diff when a non-existent table is found" do
+        expect {
+          described_class.diff! "table", table_from([[]]) do
+            allow_not_found
+          end
+        }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
+      end
+
+      it "fails the diff when a non-existent table should be present" do
+        expect {
+          described_class.diff! "#doesnt_exist", table_from(table) do
+            allow_not_found
+          end
+        }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
+      end
+
+      it "is cool with diffing an empty table" do
+        described_class.diff! "table", table_from([[]]) do
+          rows do |root|
+            root.all("tfoot tr")
+          end
+        end
+      end
+
+      it "fails the diff when a empty table is present" do
+        expect {
+          described_class.diff! "table", table_from([[]])
+        }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
+      end
+
+      it "fails the diff when a empty table should be present" do
+        expect {
+          described_class.diff! "#doesnt_exist", table_from(table) do
+            allow_not_found
+          end
+        }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
+      end
+    end
   end
 
   describe "block methods" do
@@ -194,8 +263,7 @@ describe Chop::Table do
     end
 
     describe "#allow_not_found" do
-      # FIXME bug in cucumber table implementation
-      xit "permits the table to be missing" do
+      it "permits the table to be missing" do
         described_class.diff! "table#missing", table_from([[]]) do
           allow_not_found
         end

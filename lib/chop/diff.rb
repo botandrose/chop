@@ -135,7 +135,13 @@ module Chop
     end
 
     def diff! cucumber_table = table
-      cucumber_table.diff! to_a
+      actual = to_a
+      # FIXME should just delegate to Cucumber's #diff!. Cucumber needs to handle empty tables better.
+      if !cucumber_table.raw.flatten.empty? && !actual.flatten.empty?
+        cucumber_table.diff! actual
+      elsif cucumber_table.raw.flatten != actual.flatten
+        raise Cucumber::MultilineArgument::DataTable::Different.new(cucumber_table)
+      end
     end
 
     private
