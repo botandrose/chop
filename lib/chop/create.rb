@@ -2,9 +2,9 @@ require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/object/blank"
 
 module Chop
-  class Create < Struct.new(:table, :klass, :block)
-    def self.create! table, klass, &block
-      new(table, klass, block).create!
+  class Create < Struct.new(:klass, :table, :block)
+    def self.create! klass, table, &block
+      new(klass, table, block).create!
     end
 
     attr_accessor :transformations

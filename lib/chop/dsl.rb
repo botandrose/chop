@@ -1,7 +1,7 @@
 module Chop
   module DSL
-    def create! table, klass, &block
-      Create.create! table, klass, &block
+    def create! klass, table, &block
+      Create.create! klass, table, &block
     end
 
     def diff! selector, table, session: Capybara.current_session, &block
@@ -19,7 +19,7 @@ end
 if defined?(Cucumber::MultilineArgument::DataTable)
   Cucumber::MultilineArgument::DataTable.prepend Module.new {
     def create! klass, &block
-      Chop.create! self, klass, &block
+      Chop.create! klass, self, &block
     end
 
     def diff! other_table, options={}, &block
