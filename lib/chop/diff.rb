@@ -1,6 +1,7 @@
 require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/object/blank"
 require "active_support/core_ext/class/attribute"
+require "active_support/hash_with_indifferent_access"
 
 module Chop
   class Diff < Struct.new(:selector, :table, :session, :block)
@@ -69,9 +70,9 @@ module Chop
     def hash_transformation &block
       transformation do |rows|
         header = rows[0]
-        keys = header.to_a.map { |cell| cell.text.parameterize.underscore.to_sym }
+        keys = header.to_a.map { |cell| cell.text.parameterize.underscore }
         body = rows[1..-1]
-        hashes = body.map { |row| Hash[keys.zip(row)] }
+        hashes = body.map { |row| HashWithIndifferentAccess[keys.zip(row)] }
         yield hashes
         [header] + hashes.map(&:values)
       end

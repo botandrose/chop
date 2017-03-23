@@ -1,5 +1,6 @@
 require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/object/blank"
+require "active_support/hash_with_indifferent_access"
 
 module Chop
   class Create < Struct.new(:klass, :table, :block)
@@ -18,6 +19,7 @@ module Chop
 
     def create! cucumber_table = table
       cucumber_table.hashes.map do |attributes|
+        attributes = HashWithIndifferentAccess.new(attributes)
         attributes = transformations.reduce(attributes) do |attrs, transformation|
           transformation.call(attrs)
         end
@@ -40,7 +42,7 @@ module Chop
     def rename mappings
       transformation do |attributes|
         mappings.reduce(attributes) do |attrs, (old, new)|
-          attrs[new.to_s] = attrs.delete(old.to_s) if attrs.key?(old.to_s)
+          attrs[new] = attrs.delete(old) if attrs.key?(old)
           attrs
         end
       end
@@ -52,13 +54,13 @@ module Chop
         attribute = attribute.values.first
       end
       transformation do |attributes|
-        attributes.merge attribute.to_s => yield(attributes.fetch(attribute.to_s, default))
+        attributes.merge attribute => yield(attributes.fetch(attribute, default))
       end
     end
 
     def underscore_keys
       transformation do |attributes|
-        attributes.reduce({}) do |hash, (key, value)|
+        attributes.reduce(HashWithIndifferentAccess.new) do |hash, (key, value)|
           hash.merge key.parameterize.underscore => value
         end
       end
