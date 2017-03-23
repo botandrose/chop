@@ -116,13 +116,16 @@ module Chop
       rows = rows_finder.call(root).map { |row| cells_finder.call(row).to_a }
       rows = normalize(rows)
 
-      header = @new_header ? normalize([@new_header]).first : rows.shift
+      header = @new_header ? normalize([@new_header]).first : rows.shift || []
       header_transformations.each do |transformation|
         transformation.call(header)
         header = normalize([header]).first
       end
 
-      rows = [header] + rows if header
+      if header
+        rows = [header] + rows
+        rows = normalize(rows)
+      end
 
       transformations.each do |transformation|
         transformation.call(rows)
