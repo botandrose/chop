@@ -53,6 +53,11 @@ describe Chop::DSL do
         expect(Chop).to receive(:diff!).with(selector, table)
         table.diff!(selector)
       end
+
+      it "assumes a 'table' selector" do
+        expect(Chop).to receive(:diff!).with("table", table)
+        table.diff!
+      end
     end
 
     describe "#fill_in!" do

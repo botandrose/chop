@@ -22,7 +22,7 @@ if defined?(Cucumber::MultilineArgument::DataTable)
       Chop.create! klass, self, &block
     end
 
-    def diff! other_table, options={}, &block
+    def diff! other_table="table", options={}, &block
       if other_table.is_a?(String) && !other_table.include?("|")
         Chop.diff! other_table, self, &block
       else
