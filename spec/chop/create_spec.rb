@@ -1,3 +1,4 @@
+require "spec_helper"
 require "chop/create"
 
 describe Chop::Create do
@@ -59,6 +60,7 @@ describe Chop::Create do
         records = described_class.create! table, klass do
           transformation do |attributes|
             attributes["a"] *= 2
+            attributes
           end
         end
         expect(records).to eq [{"a" => 2}, {"a" => 4}]

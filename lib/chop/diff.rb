@@ -49,13 +49,14 @@ module Chop
             end
           end
           row[index] = yield(row[index])
+          row
         end
       else
         if block.arity.zero?
           @new_header = yield
         else
           header_transformation do |row|
-            row.replace yield(row)
+            yield(row)
           end
         end
       end
@@ -72,7 +73,7 @@ module Chop
         body = rows[1..-1]
         hashes = body.map { |row| Hash[keys.zip(row)] }
         yield hashes
-        rows.replace [header] + hashes.map(&:values)
+        [header] + hashes.map(&:values)
       end
     end
 
@@ -117,9 +118,9 @@ module Chop
       rows = normalize(rows)
 
       header = @new_header ? normalize([@new_header]).first : rows.shift || []
-      header_transformations.each do |transformation|
-        transformation.call(header)
-        header = normalize([header]).first
+      header = header_transformations.reduce(header) do |header, transformation|
+        header = transformation.call(header)
+        normalize([header]).first
       end
 
       if header
@@ -127,9 +128,9 @@ module Chop
         rows = normalize(rows)
       end
 
-      transformations.each do |transformation|
-        transformation.call(rows)
-        rows = normalize(rows)
+      rows = transformations.reduce(rows) do |rows, transformation|
+        rows = transformation.call(rows)
+        normalize(rows)
       end
 
       rows.map do |row|

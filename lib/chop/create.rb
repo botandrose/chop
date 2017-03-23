@@ -18,7 +18,9 @@ module Chop
 
     def create! cucumber_table = table
       cucumber_table.hashes.map do |attributes|
-        transformations.each { |transformation| transformation.call(attributes) }
+        attributes = transformations.reduce(attributes) do |attrs, transformation|
+          transformation.call(attrs)
+        end
         if klass.is_a?(Hash)
           if factory = klass[:factory_girl]
             FactoryGirl.create factory, attributes
@@ -37,8 +39,9 @@ module Chop
 
     def rename mappings
       transformation do |attributes|
-        mappings.each do |old, new|
-          attributes[new.to_s] = attributes.delete(old.to_s) if attributes.key?(old.to_s)
+        mappings.reduce(attributes) do |attrs, (old, new)|
+          attrs[new.to_s] = attrs.delete(old.to_s) if attrs.key?(old.to_s)
+          attrs
         end
       end
     end
@@ -49,16 +52,15 @@ module Chop
         attribute = attribute.values.first
       end
       transformation do |attributes|
-        attributes[attribute.to_s] = yield(attributes.fetch(attribute.to_s, default))
+        attributes.merge attribute.to_s => yield(attributes.fetch(attribute.to_s, default))
       end
     end
 
     def underscore_keys
       transformation do |attributes|
-        new_attributes = attributes.inject({}) do |hash, (key, value)|
+        attributes.reduce({}) do |hash, (key, value)|
           hash.merge key.parameterize.underscore => value
         end
-        attributes.replace new_attributes
       end
     end
 
