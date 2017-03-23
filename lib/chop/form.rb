@@ -16,7 +16,10 @@ module Chop
     class Field < Struct.new(:session, :label, :value, :path, :field)
       def self.for session, label, value, path
         field = session.find_field(label)
-        descendants.map do |klass|
+        candidates = descendants.sort_by do |a|
+          a == Chop::Form::Default ? 1 : -1 # ensure Default comes last
+        end
+        candidates.map do |klass|
           klass.new(session, label, value, path, field)
         end.find(&:matches?)
       end
