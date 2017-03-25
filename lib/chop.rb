@@ -5,8 +5,10 @@ require "chop/definition_list"
 require "chop/unordered_list"
 require "chop/form"
 require "chop/dsl"
+require "chop/config"
 
 module Chop
   extend DSL
+  extend Config
 end
 

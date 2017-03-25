@@ -16,6 +16,20 @@ describe Chop::Create do
 
   let(:klass) { double }
 
+  describe ".register_creation_strategy" do
+    it "registers an alternate creation strategy" do
+      stub_const("TiddlyWinks", double)
+
+      described_class.register_creation_strategy :tiddlywinks do |bucket, attributes|
+        TiddlyWinks.toss attributes, at: bucket
+      end
+
+      expect(TiddlyWinks).to receive(:toss).with({"a" => 1}, { at: :pint_glass })
+      expect(TiddlyWinks).to receive(:toss).with({"a" => 2}, { at: :pint_glass })
+
+      described_class.new({ tiddlywinks: :pint_glass }, table).create!
+    end
+  end
 
   describe "#create!" do
     it "creates a record for each row in the table" do

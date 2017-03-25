@@ -1,6 +1,7 @@
 require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/object/blank"
 require "active_support/hash_with_indifferent_access"
+require "active_support/core_ext/class/attribute"
 
 module Chop
   class Create < Struct.new(:klass, :table, :block)
@@ -8,12 +9,26 @@ module Chop
       new(klass, table, block).create!
     end
 
-    attr_accessor :transformations, :create_strategy, :deferred_attributes, :after_hooks
+    class_attribute :creation_strategies
+    self.creation_strategies = {}
+
+    def self.register_creation_strategy key, &block
+      creation_strategies[key] = block
+    end
+
+    register_creation_strategy nil do |klass, attributes|
+      klass.create! attributes
+    end
+
+    register_creation_strategy :factory_girl do |factory, attributes|
+      FactoryGirl.create factory, attributes
+    end
+
+    attr_accessor :transformations, :deferred_attributes, :after_hooks
 
     def initialize(*, &other_block)
       super
       self.transformations = []
-      self.create_strategy = default_create_strategy
       self.deferred_attributes = HashWithIndifferentAccess.new
       self.after_hooks = []
       instance_eval &block if block.respond_to?(:call)
@@ -26,7 +41,11 @@ module Chop
         attributes = transformations.reduce(attributes) do |attrs, transformation|
           transformation.call(attrs)
         end
-        record = self.create_strategy.call(attributes)
+
+        strategy, factory = klass.is_a?(Hash) ? klass.to_a.first : [nil, klass]
+        args = [factory, attributes]
+        record = creation_strategies[strategy].call(*args.compact)
+
         after_hooks.each do |after_hook|
           after_hook.call(record, attributes.merge(deferred_attributes))
         end
@@ -35,21 +54,7 @@ module Chop
     end
 
     def create &block
-      self.create_strategy = block
-    end
-
-    def default_create_strategy
-      Proc.new do |attributes|
-        if klass.is_a?(Hash)
-          if factory = klass[:factory_girl]
-            FactoryGirl.create factory, attributes
-          else
-            raise "Unknown building strategy"
-          end
-        else
-          klass.create! attributes
-        end
-      end
+      self.creation_strategies = Proc.new { block }
     end
 
     def transformation &block
