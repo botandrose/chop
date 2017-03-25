@@ -38,8 +38,12 @@ High-level declarative transformations:
 * `#delete`: Deletes one or more fields.
 
 All these methods are implemented in terms of the following low-level methods, useful for when you need more control over the transformation:
-* `#field`: performs transformations on a specific oield value.
+* `#field`: performs transformations on a specific field value.
 * `#transformation`: performs transformations on the attributes hash.
+
+Lifecycle hooks:
+* `#after`: Temporarily removes zero or more fields, and then after record creation, yields them to the block, along with the created record.
+* `#create`: Override the default creation strategy.
 
 ### Block methods for `#diff!`:
 

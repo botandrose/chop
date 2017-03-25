@@ -8,11 +8,14 @@ module Chop
       new(klass, table, block).create!
     end
 
-    attr_accessor :transformations
+    attr_accessor :transformations, :create_strategy, :deferred_attributes, :after_hooks
 
     def initialize(*, &other_block)
       super
       self.transformations = []
+      self.create_strategy = default_create_strategy
+      self.deferred_attributes = HashWithIndifferentAccess.new
+      self.after_hooks = []
       instance_eval &block if block.respond_to?(:call)
       instance_eval &other_block if block_given?
     end
@@ -23,6 +26,20 @@ module Chop
         attributes = transformations.reduce(attributes) do |attrs, transformation|
           transformation.call(attrs)
         end
+        record = self.create_strategy.call(attributes)
+        after_hooks.each do |after_hook|
+          after_hook.call(record, attributes.merge(deferred_attributes))
+        end
+        record
+      end
+    end
+
+    def create &block
+      self.create_strategy = block
+    end
+
+    def default_create_strategy
+      Proc.new do |attributes|
         if klass.is_a?(Hash)
           if factory = klass[:factory_girl]
             FactoryGirl.create factory, attributes
@@ -118,6 +135,20 @@ module Chop
       end
     end
     alias_method :belongs_to, :has_one
+
+    def after *keys, &block
+      defer *keys
+      after_hooks << block
+    end
+
+    def defer *keys
+      transformation do |attributes|
+        keys.each do |key|
+          self.deferred_attributes[key] = attributes.delete(key)
+        end
+        attributes
+      end
+    end
 
     private
 

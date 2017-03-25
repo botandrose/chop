@@ -55,6 +55,19 @@ describe Chop::Create do
       end
     end
 
+    describe "#create" do
+      it "allows for overriding the creation strategy" do
+        ret = []
+        results = described_class.create! klass, table do
+          create do |attributes|
+            ret << attributes
+            attributes
+          end
+        end
+        expect(results).to eq ret
+      end
+    end
+
     describe "#transformation" do
       it "adds a transformation to the create pipeline" do
         records = described_class.create! klass, table do
@@ -269,6 +282,42 @@ describe Chop::Create do
           has_many({ :users => :admins }, User)
         end
         expect(records).to eq [{"admins" => [micah, michael]}]
+      end
+    end
+
+    describe "#after" do
+      it "yields each created record" do
+        after_records = []
+
+        described_class.create! klass, table do
+          after do |record|
+            after_records << record
+          end
+        end
+
+        expect(after_records).to eq [{"a"=>1}, {"a"=>2}]
+      end
+
+      it "removes specified keys from the attributes hash" do
+        records = described_class.create! klass, table do
+          after(:a) {}
+        end
+        expect(records).to eq [{}, {}]
+      end
+
+      it "adds the keys back in for the after hook" do
+        after_records = []
+        after_attributes = []
+
+        records = described_class.create! klass, table do
+          after :a do |record, attributes|
+            after_records << record
+            after_attributes << attributes
+          end
+        end
+
+        expect(after_records).to eq [{}, {}]
+        expect(after_attributes).to eq [{"a"=>1}, {"a"=>2}]
       end
     end
   end
