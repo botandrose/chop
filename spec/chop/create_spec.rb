@@ -92,6 +92,15 @@ describe Chop::Create do
       end
     end
 
+    describe "#delete" do
+      it "removes specified keys from the attributes hash" do
+        records = described_class.create! klass, table do
+          delete :a
+        end
+        expect(records).to eq [{}, {}]
+      end
+    end
+
     describe "#underscore_keys" do
       let(:table) { double(hashes: [{"First Name" => "Micah"}, {"Last Name" => "Geisel"}]) }
 

@@ -35,6 +35,7 @@ High-level declarative transformations:
 * `#has_many`: Replaces a comma-delimited list of entity names with an array of those entities. Uses `.find_by_name` by default.
 * `#underscore_keys`: Converts all hash keys to underscored versions.
 * `#rename`: Renames one or more fields.
+* `#delete`: Deletes one or more fields.
 
 All these methods are implemented in terms of the following low-level methods, useful for when you need more control over the transformation:
 * `#field`: performs transformations on a specific oield value.

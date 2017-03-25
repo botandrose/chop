@@ -39,6 +39,15 @@ module Chop
       transformations << block
     end
 
+    def delete *keys
+      transformation do |attributes|
+        keys.reduce(attributes) do |attrs, key|
+          attributes.delete(key)
+          attributes
+        end
+      end
+    end
+
     def rename mappings
       transformation do |attributes|
         mappings.reduce(attributes) do |attrs, (old, new)|
