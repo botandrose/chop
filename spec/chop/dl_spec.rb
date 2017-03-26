@@ -18,12 +18,10 @@ describe Chop::DefinitionList do
     let(:body) do
       slim """
         dl
-          dfn
-            dt A
-            dd 1
-          dfn
-            dt B
-            dd 2
+          dt A
+          dd 1
+          dt B
+          dd 2
       """
     end
 
