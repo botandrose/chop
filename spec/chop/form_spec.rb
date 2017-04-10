@@ -5,6 +5,19 @@ require "capybara"
 require "capybara/poltergeist"
 require "slim"
 
+module FileFieldFiles
+  refine Capybara::Node::Element do
+    def files
+      id = self["id"]
+      session.evaluate_script("document.getElementById('#{id}').files").inject([]) do |files, (key, hash)|
+        files << hash["name"] if key =~ /^\d+$/
+        files
+      end
+    end
+  end
+end
+using FileFieldFiles
+
 describe Chop::Form do
   describe ".fill_in!" do
     describe "texty fields" do
@@ -157,13 +170,53 @@ describe Chop::Form do
       end
     end
 
-    it "attaches files to file fields" do
-      session = test_app <<-SLIM
-        label for="f" F
-        input id="f" type="file"
-      SLIM
-      described_class.fill_in! table_from([["F", "README.md"]]), path: "./"
-      expect(session.find_field("F").value).to eq "C:\\fakepath\\README.md"
+    describe "file fields" do
+      context "single file field" do
+        let!(:session) { test_app <<-SLIM }
+          label for="f" F
+          input id="f" type="file"
+        SLIM
+
+        it "attaches a file to a file field" do
+          described_class.fill_in! table_from([["F", "README.md"]]), path: "./"
+          expect(session.find_field("F").files).to eq ["README.md"]
+        end
+
+        it "complains when file does not exist" do
+          expect {
+            described_class.fill_in! table_from([["F", "DOES-NOT-EXIST"]]), path: "./"
+          }.to raise_error(Errno::ENOENT)
+        end
+
+        it "complains when trying to attach multiple files" do
+          expect {
+            described_class.fill_in! table_from([["F", "README.md chop.gemspec"]]), path: "./"
+          }.to raise_error(TypeError)
+        end
+      end
+
+      context "multiple file field" do
+        let!(:session) { test_app <<-SLIM }
+          label for="f" F
+          input id="f" type="file" multiple="multiple"
+        SLIM
+
+        it "attaches multiple files to a file field" do
+          described_class.fill_in! table_from([["F", "README.md chop.gemspec"]]), path: "./"
+          expect(session.find_field("F").files).to eq ["README.md", "chop.gemspec"]
+        end
+
+        it "attaches a single file to a file field" do
+          described_class.fill_in! table_from([["F", "README.md"]]), path: "./"
+          expect(session.find_field("F").files).to eq ["README.md"]
+        end
+
+        it "complains when a file does not exist" do
+          expect {
+            described_class.fill_in! table_from([["F", "README.md DOES-NOT-EXIST"]]), path: "./"
+          }.to raise_error(Errno::ENOENT)
+        end
+      end
     end
   end 
 
@@ -187,3 +240,4 @@ describe Chop::Form do
     Slim::Template.new { template }.render
   end
 end
+

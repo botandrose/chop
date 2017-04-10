@@ -7,6 +7,13 @@ module Chop
       new(table, session, path).fill_in!
     end
 
+    def self.diff! selector, table, session: Capybara.current_session, &block
+      actual = session.find("form").all("input, textarea, select").map do |field|
+        [field.label, field.value]
+      end
+      table.diff! actual, surplus_row: false
+    end
+
     def fill_in!
       table.rows_hash.each do |label, value|
         Field.for(session, label, value, path).fill_in!
@@ -110,13 +117,48 @@ module Chop
       end
     end
 
-    class File < Field
+    class SingleFile < Field
       def matches?
-        field[:type] == "file"
+        field[:type] == "file" && !field[:multiple]
       end
 
       def fill_in!
-        field.set ::File.join(path, value)
+        assert_single_file!
+        field.set file_path
+      end
+
+      private
+
+      def file_path
+        ::File.join(path, value).tap do |path|
+          ::File.open(path){} # raise Errno::ENOENT if file doesn't exist
+        end
+      end
+
+      def assert_single_file!
+        if value.include?(" ")
+          raise TypeError.new("Cannot attach multiple files to file field '#{label}' without the multiple attribute present")
+        end
+      end
+    end
+
+    class MultipleFile < Field
+      def matches?
+        field[:type] == "file" && field[:multiple]
+      end
+
+      def fill_in!
+        field.set file_paths
+      end
+
+      private
+
+      def file_paths
+        value.split(" ").map do |filename|
+          ::File.join(path, filename).tap do |path|
+            ::File.open(path){} # raise Errno::ENOENT if file doesn't exist
+          end
+        end
       end
     end
 
