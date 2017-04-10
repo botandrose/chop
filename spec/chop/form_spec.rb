@@ -2,12 +2,13 @@ require "spec_helper"
 require "chop/form"
 require "cucumber"
 require "capybara"
+require "capybara/poltergeist"
 require "slim"
 
 describe Chop::Form do
   describe ".fill_in!" do
     describe "texty fields" do
-      %w(text email range search tel url number password color month week date datetime time).each do |type|
+      %w(text email search tel url password month week date datetime time).each do |type|
         it "fills in #{type} fields" do
           session = test_app <<-SLIM
             label for="f" F
@@ -17,6 +18,33 @@ describe Chop::Form do
           expect(session.find_field("F").value).to eq "V"
         end
       end
+    end
+
+    it "fills in range fields" do
+      session = test_app <<-SLIM
+        label for="f" F
+        input id="f" type="range" min="0" max="100"
+      SLIM
+      described_class.fill_in! table_from([["F", "100"]])
+      expect(session.find_field("F").value).to eq "100"
+    end
+
+    it "fills in number fields" do
+      session = test_app <<-SLIM
+        label for="f" F
+        input id="f" type="number"
+      SLIM
+      described_class.fill_in! table_from([["F", "50"]])
+      expect(session.find_field("F").value).to eq "50"
+    end
+
+    it "fills in color fields" do
+      session = test_app <<-SLIM
+        label for="f" F
+        input id="f" type="color"
+      SLIM
+      described_class.fill_in! table_from([["F", "#000000"]])
+      expect(session.find_field("F").value).to eq "#000000"
     end
 
     it "fills in textareas" do
@@ -135,7 +163,7 @@ describe Chop::Form do
         input id="f" type="file"
       SLIM
       described_class.fill_in! table_from([["F", "README.md"]]), path: "./"
-      expect(session.find_field("F").value).to eq "./README.md"
+      expect(session.find_field("F").value).to eq "C:\\fakepath\\README.md"
     end
   end 
 
@@ -145,6 +173,7 @@ describe Chop::Form do
 
   def test_app template
     Capybara.app = slim_app(template)
+    Capybara.default_driver = :poltergeist
     session = Capybara.current_session
     session.visit("/")
     session
