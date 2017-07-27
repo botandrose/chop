@@ -119,6 +119,40 @@ describe Chop::Create do
       end
     end
 
+    describe "#default" do
+      context "with a second parameter" do
+        it "defaults the given field to the given value" do
+          records = described_class.create! klass, table do
+            default :b, 3
+          end
+          expect(records).to eq [{"a" => 1, "b" => 3}, {"a" => 2, "b" => 3}]
+        end
+
+        it "respects the original value if present" do
+          records = described_class.create! klass, table do
+            default :a, 0
+          end
+          expect(records).to eq [{"a" => 1}, {"a" => 2}]
+        end
+      end
+
+      context "with a block" do
+        it "defaults the given field to the given value" do
+          records = described_class.create! klass, table do
+            default(:b) { 3 }
+          end
+          expect(records).to eq [{"a" => 1, "b" => 3}, {"a" => 2, "b" => 3}]
+        end
+
+        it "respects the original value if present" do
+          records = described_class.create! klass, table do
+            default(:a) { 0 }
+          end
+          expect(records).to eq [{"a" => 1}, {"a" => 2}]
+        end
+      end
+    end
+
     describe "#delete" do
       it "removes specified keys from the attributes hash" do
         records = described_class.create! klass, table do

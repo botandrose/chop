@@ -89,6 +89,10 @@ module Chop
       end
     end
 
+    def default key, default_value = nil
+      field(key, default: nil) { |value| value || default_value || yield }
+    end
+
     def underscore_keys
       transformation do |attributes|
         attributes.reduce(HashWithIndifferentAccess.new) do |hash, (key, value)|
