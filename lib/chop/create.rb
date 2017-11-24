@@ -24,6 +24,10 @@ module Chop
       FactoryGirl.create factory, attributes
     end
 
+    register_creation_strategy :factory_bot do |factory, attributes|
+      FactoryBot.create factory, attributes
+    end
+
     attr_accessor :transformations, :deferred_attributes, :after_hooks
 
     def initialize(*, &other_block)
