@@ -8,10 +8,25 @@ module Chop
     end
 
     def self.diff! selector, table, session: Capybara.current_session, &block
-      actual = session.find("form").all("input, textarea, select").map do |field|
-        [field.label, field.value]
+      all_fields = session.find("form").all("input, textarea, select")
+      deduplicated_fields = all_fields.inject([]) do |fields, field|
+        next fields if fields.map { |field| field[:name] }.include?(field[:name])
+        fields + [field]
+      end
+      actual = deduplicated_fields.inject([]) do |fields, field|
+        next fields unless label = find_label_for(field)
+        field = Field.from(session, field)
+        fields + [[label.text, field.get_value]]
       end
       table.diff! actual, surplus_row: false
+    end
+
+    def self.find_label_for field, session: Capybara.current_session
+      if field[:id]
+        session.first("label[for='#{field[:id]}']")
+      else
+        raise "cannot find label without id... yet"
+      end
     end
 
     def fill_in!
@@ -23,12 +38,25 @@ module Chop
     class Field < Struct.new(:session, :label, :value, :path, :field)
       def self.for session, label, value, path
         field = session.find_field(label)
-        candidates = descendants.sort_by do |a|
-          a == Chop::Form::Default ? 1 : -1 # ensure Default comes last
-        end
         candidates.map do |klass|
           klass.new(session, label, value, path, field)
         end.find(&:matches?)
+      end
+
+      def self.from session, field
+        candidates.map do |klass|
+          klass.new(session, nil, nil, nil, field)
+        end.find(&:matches?)
+      end
+
+      def self.candidates
+        descendants.sort_by do |a|
+          a == Chop::Form::Default ? 1 : -1 # ensure Default comes last
+        end
+      end
+
+      def get_value
+        field.value
       end
     end
 
@@ -89,6 +117,10 @@ module Chop
       def fill_in!
         field.set value.present?
       end
+
+      def get_value
+        field.checked? ? "✓" : ""
+      end
     end
 
     class Radio < Field
@@ -102,6 +134,10 @@ module Chop
         else
           session.choose label
         end
+      end
+
+      def get_value
+        session.all("[name='#{field[:name]}']").find(&:checked?).try(:value)
       end
 
       private
