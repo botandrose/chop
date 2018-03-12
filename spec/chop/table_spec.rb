@@ -422,38 +422,118 @@ describe Chop::Table do
     end
 
     describe "#hash_transformation" do
-      let(:body) do
-        slim """
-          table
-            thead
-              tr
-                th A
-                th B
-            tbody
-              tr
-                td 1
-                td 2
-              tr
-                td 2
-                td 3
-        """
+      context "with normal header keys" do
+        let(:body) do
+          slim """
+            table
+              thead
+                tr
+                  th A
+                  th B
+              tbody
+                tr
+                  td 1
+                  td 2
+                tr
+                  td 2
+                  td 3
+          """
+        end
+
+        let(:table) do
+          [
+            ["A","B"],
+            ["2","4"],
+            ["3","6"],
+          ]
+        end
+
+        it "allows arbitrary transformations on a data structure of row hashes" do
+          described_class.diff! "table", table_from(table) do
+            hash_transformation do |hashes|
+              hashes.map! do |hash|
+                hash[:a] = hash[:a].text.to_i + 1
+                hash[:b] = hash[:b].text.to_i * 2
+                hash
+              end
+            end
+          end
+        end
       end
 
-      let(:table) do
-        [
-          ["A","B"],
-          ["2","4"],
-          ["3","6"],
-        ]
+      context "with unicode keys" do
+        let(:body) do
+          slim """
+            table
+              thead
+                tr
+                  th ☆
+                  th 🔒
+              tbody
+                tr
+                  td 1
+                  td 2
+                tr
+                  td 2
+                  td 3
+          """
+        end
+
+        let(:table) do
+          [
+            ["☆","🔒"],
+            ["2","4"],
+            ["3","6"],
+          ]
+        end
+
+        it "allows arbitrary transformations on a data structure of row hashes" do
+          described_class.diff! "table", table_from(table) do
+            hash_transformation do |hashes|
+              hashes.map! do |hash|
+                hash[:☆] = hash[:☆].text.to_i + 1
+                hash[:🔒] = hash[:🔒].text.to_i * 2
+                hash
+              end
+            end
+          end
+        end
       end
 
-      it "allows arbitrary transformations on a data structure of row hashes" do
-        described_class.diff! "table", table_from(table) do
-          hash_transformation do |hashes|
-            hashes.map! do |hash|
-              hash[:a] = hash[:a].text.to_i + 1
-              hash[:b] = hash[:b].text.to_i * 2
-              hash
+      context "with blank keys" do
+        let(:body) do
+          slim """
+            table
+              thead
+                tr
+                  th &nbsp;
+                  th &nbsp;
+              tbody
+                tr
+                  td 1
+                  td 2
+                tr
+                  td 2
+                  td 3
+          """
+        end
+
+        let(:table) do
+          [
+            ["",""],
+            ["2","4"],
+            ["3","6"],
+          ]
+        end
+
+        it "allows arbitrary transformations on a data structure of row hashes" do
+          described_class.diff! "table", table_from(table) do
+            hash_transformation do |hashes|
+              hashes.map! do |hash|
+                hash[1] = hash[1].text.to_i + 1
+                hash[2] = hash[2].text.to_i * 2
+                hash
+              end
             end
           end
         end

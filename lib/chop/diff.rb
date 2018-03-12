@@ -70,7 +70,12 @@ module Chop
     def hash_transformation &block
       transformation do |rows|
         header = rows[0]
-        keys = header.to_a.map { |cell| cell.text.parameterize.underscore }
+        keys = header.to_a.map.with_index do |cell, index|
+          key = cell.text.parameterize.underscore
+          next key if key.present?
+          next cell.text if cell.text.present?
+          index + 1
+        end
         body = rows[1..-1]
         hashes = body.map { |row| HashWithIndifferentAccess[keys.zip(row)] }
         yield hashes
