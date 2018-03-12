@@ -464,6 +464,7 @@ describe Chop::Table do
       context "with unicode keys" do
         let(:body) do
           slim """
+            meta charset='utf-8'
             table
               thead
                 tr
