@@ -149,11 +149,11 @@ end
 
 ### Don't like monkeypatching?
 
-Load `chop` before `cucumber` in your Gemfile, and call the two methods directly on the `Chop` module, passing the cucumber table in as the first argument.
+Load `chop` before `cucumber` in your Gemfile, and call the two methods directly on the `Chop` module, passing the cucumber table in as the last argument.
 
 ```ruby
 Chop.create! Users, table
-Chop.diff! table, "table"
+Chop.diff! "table", table
 Chop.fill_in! table
 ```
 
