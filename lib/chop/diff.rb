@@ -9,22 +9,17 @@ module Chop
       new(selector, table, session, block).diff!
     end
 
+    def cell_to_image_filename cell
+      cell.all("img").map do |img|
+        File.basename(img[:src] || "").split("?")[0].sub(/-[0-9a-f]{64}/, '')
+      end.first
+    end
+
     class_attribute :default_selector, :rows_finder, :cells_finder, :text_finder
 
     self.rows_finder = -> { raise "Missing rows finder!" }
     self.cells_finder = -> { raise "Missing cells finder!" }
     self.text_finder = ->(cell) { cell.text }
-
-    def self.text_or_image_alt_finder
-      ->(cell) do
-        text = cell.text
-        if text.blank? && image = cell.first("img")
-          image["alt"]
-        else
-          text
-        end
-      end
-    end
 
     attr_accessor :header_transformations, :transformations
 
@@ -94,11 +89,7 @@ module Chop
     def image *keys
       keys.each do |key|
         field(key) do |cell|
-          if image = cell.first("img")
-            image["alt"]
-          else
-            cell
-          end
+          cell_to_image_filename(cell)
         end
       end
     end

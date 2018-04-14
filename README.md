@@ -61,7 +61,7 @@ Overide Capybara finders:
 * `#allow_not_found`: diffing against a missing element will diff against `[[]]` instead of raising an exception.
 
 High-level declarative transformations:
-* `#image`: Replaces the specified cell with the alt text of the first image within it.
+* `#image`: Replaces the specified cell with the filename of the first image within it, stripped of path and cachebusters.
 
 All these methods are implemented in terms of the following low-level methods, useful for when you need more control over the transformation:
 * `#header`: add or transform the table header, depending on block arity.

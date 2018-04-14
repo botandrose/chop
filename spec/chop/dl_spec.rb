@@ -56,6 +56,51 @@ describe Chop::DefinitionList do
           end
         end
       end
+
+      describe "#field" do
+        it "transforms a cell by key, assuming a 'key-value' table structure" do
+          dl = [
+            ["A", "1"],
+            ["B", "4"],
+          ]
+          described_class.diff! "dl", table_from(dl) do
+            field :b do |cell|
+              cell.text.to_i * 2
+            end
+          end
+        end
+      end
+
+      describe "#image" do
+        let(:body) do
+          slim """
+            dl
+              dt A
+              dd: img src='/path/to/1.jpg?123456'
+              dt B
+              dd: img src='http://example.com/path/2-3a679bd0da8d45d2bf257420f948e1fe1b981b0d8cbac67d9992f22d61d5767e.jpg'
+          """
+        end
+
+        let(:dl) do
+          [
+            ["A","1.jpg"],
+            ["B","2.jpg"],
+          ]
+        end
+
+        it "replaces the cell with the image's filename, normalized, by key" do
+          described_class.diff! "dl", table_from(dl) do
+            image :a, :b
+          end
+        end
+
+        it "replaces the cell with the image's filename, normalized, by column index" do
+          described_class.diff! "dl", table_from(dl) do
+            image 1
+          end
+        end
+      end
     end
   end 
 
