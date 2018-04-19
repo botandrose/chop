@@ -50,12 +50,13 @@ describe Chop::DSL do
     describe "#diff!" do
       it "delegates to Chop.diff!" do
         selector = "table"
-        expect(Chop).to receive(:diff!).with(selector, table)
-        table.diff!(selector)
+        options = { as: :table }
+        expect(Chop).to receive(:diff!).with(selector, table, options)
+        table.diff!(selector, options)
       end
 
-      it "assumes a 'table' selector" do
-        expect(Chop).to receive(:diff!).with("table", table)
+      it "assumes a 'table' selector and empty options" do
+        expect(Chop).to receive(:diff!).with("table", table, {})
         table.diff!
       end
     end

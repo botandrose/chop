@@ -1,3 +1,5 @@
+require "active_support/inflector"
+
 module Chop
   module DSL
     def create! klass, table, &block
