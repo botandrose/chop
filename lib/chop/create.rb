@@ -74,6 +74,15 @@ module Chop
       end
     end
 
+    def copy mappings
+      transformation do |attributes|
+        mappings.each do |from, to|
+          attributes[to] = attributes[from]
+        end
+        attributes
+      end
+    end
+
     def rename mappings
       transformation do |attributes|
         mappings.reduce(attributes) do |attrs, (old, new)|

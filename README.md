@@ -39,6 +39,7 @@ High-level declarative transformations:
 * `#has_many`: Replaces a comma-delimited list of entity names with an array of those entities. Uses `.find_by_name` by default.
 * `#underscore_keys`: Converts all hash keys to underscored versions.
 * `#default`: Provides a default value for a given field.
+* `#copy`: Copies the value of one or more fields.
 * `#rename`: Renames one or more fields.
 * `#delete`: Deletes one or more fields.
 

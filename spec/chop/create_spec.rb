@@ -94,6 +94,15 @@ describe Chop::Create do
       end
     end
 
+    describe "#copy" do
+      it "copies fields by hash map" do
+        records = described_class.create! klass, table do
+          copy :a => :b
+        end
+        expect(records).to eq [{"a" => 1, "b" => 1}, {"a" => 2, "b" => 2}]
+      end
+    end
+
     describe "#rename" do
       it "renames fields by hash map" do
         records = described_class.create! klass, table do
