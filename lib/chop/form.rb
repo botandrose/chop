@@ -9,7 +9,12 @@ module Chop
 
     def self.diff! selector, table, session: Capybara.current_session, &block
       all_fields = session.find("form").all("input, textarea, select")
-      deduplicated_fields = all_fields.inject([]) do |fields, field|
+      relevant_fields = all_fields.inject([]) do |fields, field|
+        next fields if field[:name].blank?
+        next fields if field[:type] == "submit"
+        fields + [field]
+      end
+      deduplicated_fields = relevant_fields.inject([]) do |fields, field|
         next fields if fields.map { |field| field[:name] }.include?(field[:name])
         fields + [field]
       end
@@ -22,7 +27,7 @@ module Chop
     end
 
     def self.find_label_for field, session: Capybara.current_session
-      if field[:id]
+      if field[:id].present?
         session.first("label[for='#{field[:id]}']")
       else
         raise "cannot find label without id... yet"
