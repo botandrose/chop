@@ -11,6 +11,7 @@ describe Chop::DefinitionList do
 
   before do
     Capybara.app = app
+    Capybara.server = :webrick
     Capybara.current_session.visit("/")
   end
 
