@@ -171,7 +171,7 @@ module Chop
       private
 
       def file_path
-        ::File.join(path, value).tap do |path|
+        ::File.expand_path(::File.join(path, value)).tap do |path|
           ::File.open(path){} # raise Errno::ENOENT if file doesn't exist
         end
       end
@@ -196,7 +196,7 @@ module Chop
 
       def file_paths
         value.split(" ").map do |filename|
-          ::File.join(path, filename).tap do |path|
+          ::File.expand_path(::File.join(path, filename)).tap do |path|
             ::File.open(path){} # raise Errno::ENOENT if file doesn't exist
           end
         end
