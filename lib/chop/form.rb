@@ -152,7 +152,7 @@ module Chop
       end
 
       def value_field
-        session.first("[name='#{field[:name]}'][value='#{value}']")
+        session.find("[name='#{field[:name]}'][value='#{value}']")
       rescue Capybara::ElementNotFound
         {}
       end
