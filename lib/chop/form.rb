@@ -135,7 +135,7 @@ module Chop
 
       def fill_in!
         if nonstandard_labelling?
-          session.choose value
+          value_field.click
         else
           session.choose label
         end
@@ -152,7 +152,7 @@ module Chop
       end
 
       def value_field
-        session.find_field(value)
+        session.first("[name='#{field[:name]}'][value='#{value}']")
       rescue Capybara::ElementNotFound
         {}
       end
