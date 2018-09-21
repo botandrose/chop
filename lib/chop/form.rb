@@ -203,6 +203,16 @@ module Chop
       end
     end
 
+    class Range < Field
+      def matches?
+        field[:type] == "range"
+      end
+
+      def fill_in!
+        session.execute_script("document.getElementById('#{field[:id]}').value = #{value}")
+      end
+    end
+
     class Default < Field
       def matches?
         true
