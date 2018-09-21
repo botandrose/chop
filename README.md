@@ -18,7 +18,7 @@ end
 Chop monkeypatches Cucumber tables with three new methods:
 
 * `#create!`: Creates entities. Built-in support for ActiveRecord (default) and FactoryGirl, at present.
-* `#diff!`: Enhances existing method to also accept a CSS selector. Currently supports diffing `<table>`, `<dl>`, and `<ul>`.
+* `#diff!`: Enhances existing method to also accept a CSS selector. Currently supports diffing `<table>`, `<dl>`, `<ul>`, and even `<form>`!.
 * `#fill_in!`: Fills in a form on the current page.
 
 All these methods accept blocks for customization.
@@ -161,8 +161,6 @@ Chop.fill_in! table
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
