@@ -12,6 +12,7 @@ module Chop
       relevant_fields = all_fields.inject([]) do |fields, field|
         next fields if field[:name].blank?
         next fields if field[:type] == "submit"
+        next fields if field[:type] == "hidden"
         fields + [field]
       end
       deduplicated_fields = relevant_fields.inject([]) do |fields, field|
@@ -21,14 +22,14 @@ module Chop
       actual = deduplicated_fields.inject([]) do |fields, field|
         next fields unless label = find_label_for(field)
         field = Field.from(session, field)
-        fields + [[label.text, field.get_value]]
+        fields + [[label.text(:all), field.get_value.to_s]]
       end
-      table.diff! actual, surplus_row: false
+      table.diff! actual, surplus_row: false, misplaced_col: false
     end
 
     def self.find_label_for field, session: Capybara.current_session
       if field[:id].present?
-        session.first("label[for='#{field[:id]}']")
+        session.first("label[for='#{field[:id]}']", visible: :all)
       else
         raise "cannot find label without id... yet"
       end
