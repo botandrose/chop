@@ -522,7 +522,7 @@ describe Chop::Table do
 
         let(:table) do
           [
-            [" "," "],
+            ["",""],
             ["2","4"],
             ["3","6"],
           ]
