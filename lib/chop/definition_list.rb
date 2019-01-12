@@ -13,7 +13,7 @@ module Chop
     def column index, &block
       transformation do |rows|
         rows.map.with_index do |row, row_index|
-          row[index] = block.call(row[index])
+          row[index] = block.call(row[index]) if row.length > index
           row
         end
       end

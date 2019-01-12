@@ -56,6 +56,18 @@ describe Chop::DefinitionList do
             end
           end
         end
+
+        it "doesn't yield to the block if the index is out-of-bounds" do
+          dl = [
+            ["A", "1"],
+            ["B", "2"],
+          ]
+          described_class.diff! "dl", table_from(dl) do
+            column 5 do |cell|
+              raise "this block should not be called"
+            end
+          end
+        end
       end
 
       describe "#field" do
