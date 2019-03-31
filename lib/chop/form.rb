@@ -153,9 +153,7 @@ module Chop
       end
 
       def value_field
-        session.find("[name='#{field[:name]}'][value='#{value}']")
-      rescue Capybara::ElementNotFound
-        {}
+        session.all(:field, value).find { |el| el[:name] == field[:name] } || {}
       end
     end
 

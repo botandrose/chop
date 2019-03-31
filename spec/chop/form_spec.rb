@@ -94,7 +94,7 @@ describe Chop::Form do
       expect(session.find_field("F").value).to eq ["T","V"]
     end
 
-    describe "radio buttons" do
+    fdescribe "radio buttons" do
       it "chooses a radio button" do
         session = test_app <<-SLIM
           label for="f" F
@@ -105,12 +105,24 @@ describe Chop::Form do
       end
 
       context "with non-standard labelling for groups" do
-        it "chooses a radio button" do
+        it "chooses a radio button by value" do
           session = test_app <<-SLIM
             label for="f_p" F
             input type="radio" value="P" name="f" id="f_p"
-            label for="f_p" P
+            label for="f_p" Power
             input type="radio" value="V" name="f" id="f_v"
+            label for="f_v" Value
+          SLIM
+          described_class.fill_in! table_from([["F", "V"]])
+          expect(session.find_field("f_v")).to be_checked
+        end
+
+        it "chooses a radio button by label" do
+          session = test_app <<-SLIM
+            label for="f_p" F
+            input type="radio" value="Power" name="f" id="f_p"
+            label for="f_p" P
+            input type="radio" value="Value" name="f" id="f_v"
             label for="f_v" V
           SLIM
           described_class.fill_in! table_from([["F", "V"]])
