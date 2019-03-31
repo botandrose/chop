@@ -94,7 +94,7 @@ describe Chop::Form do
       expect(session.find_field("F").value).to eq ["T","V"]
     end
 
-    fdescribe "radio buttons" do
+    describe "radio buttons" do
       it "chooses a radio button" do
         session = test_app <<-SLIM
           label for="f" F
@@ -238,6 +238,7 @@ describe Chop::Form do
 
   def test_app template
     Capybara.app = slim_app(template)
+    Capybara.server = :webrick
     Capybara.default_driver = :poltergeist
     session = Capybara.current_session
     session.visit("/")
