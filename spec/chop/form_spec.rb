@@ -128,6 +128,18 @@ describe Chop::Form do
           described_class.fill_in! table_from([["F", "V"]])
           expect(session.find_field("f_v")).to be_checked
         end
+
+        it "favors later radio buttons if multiple match (to avoid initial label if group label matches selection label)" do
+          session = test_app <<-SLIM
+            label for="f_p" F?
+            input type="radio" value="Power" name="f" id="f_p"
+            label for="f_p" P
+            input type="radio" value="Value" name="f" id="f_v"
+            label for="f_v" F
+          SLIM
+          described_class.fill_in! table_from([["F", "F"]])
+          expect(session.find_field("f_v")).to be_checked
+        end
       end
     end
 

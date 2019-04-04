@@ -153,7 +153,7 @@ module Chop
       end
 
       def value_field
-        session.all(:field, value).find { |el| el[:name] == field[:name] } || {}
+        session.all(:field, value).select { |el| el[:name] == field[:name] }.last || {}
       end
     end
 
