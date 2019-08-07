@@ -144,6 +144,7 @@ module Chop
     end
 
     def has_many key, klass=nil, delimiter: ", ", name_field: :name
+      klass ||= key.to_s.classify.constantize
       field key do |names|
         names.split(delimiter).map do |name|
           klass.find_by!(name_field => name)
@@ -152,6 +153,7 @@ module Chop
     end
 
     def has_one key, klass=nil, name_field: :name
+      klass ||= key.to_s.classify.constantize
       field key do |name|
         klass.find_by!(name_field => name) if name.present?
       end

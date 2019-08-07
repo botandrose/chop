@@ -314,6 +314,17 @@ describe Chop::Create do
         end
         expect(records).to eq [{"admin" => micah}]
       end
+
+      it "can infer class name if one is omitted" do
+        user_class, micah = double, double
+        allow(user_class).to receive(:find_by!).with(name: "Micah Geisel").and_return(micah)
+        stub_const("User", user_class)
+        table = double(hashes: [{"user" => "Micah Geisel"}])
+        records = described_class.create! klass, table do
+          has_one :user
+        end
+        expect(records).to eq [{"user" => micah}]
+      end
     end
 
     describe "#has_many" do
@@ -339,6 +350,17 @@ describe Chop::Create do
           has_many({ :users => :admins }, User)
         end
         expect(records).to eq [{"admins" => [micah, michael]}]
+      end
+
+      it "can infer class name if one is omitted" do
+        user_class, micah, michael = double, double, double
+        allow(user_class).to receive(:find_by!).with(name: "Micah Geisel").and_return(micah)
+        allow(user_class).to receive(:find_by!).with(name: "Michael Gubitosa").and_return(michael)
+        stub_const("User", user_class)
+        records = described_class.create! klass, table do
+          has_many :users
+        end
+        expect(records).to eq [{"users" => [micah, michael]}]
       end
     end
 
