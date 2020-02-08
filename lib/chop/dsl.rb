@@ -7,7 +7,13 @@ module Chop
     end
 
     def diff! selector, table, session: Capybara.current_session, as: nil, &block
-      class_name = as ? as.to_s.camelize : session.find(selector).tag_name.camelize
+      class_name = if as
+        as.to_s
+      elsif selector.respond_to?(:tag_name)
+        selector.tag_name
+      else
+        session.find(selector).tag_name
+      end.camelize
       klass = const_get("Chop::#{class_name}")
       klass.diff! selector, table, session: session, &block
     end
@@ -25,7 +31,7 @@ if defined?(Cucumber::MultilineArgument::DataTable)
     end
 
     def diff! other_table="table", options={}, &block
-      if other_table.is_a?(String) && !other_table.include?("|")
+      if other_table.respond_to?(:tag_name) || (other_table.is_a?(String) && !other_table.include?("|"))
         Chop.diff! other_table, self, options, &block
       else
         super

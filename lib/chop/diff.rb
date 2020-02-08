@@ -157,7 +157,11 @@ module Chop
 
     def root
       @root ||= begin
-        session.find(selector)
+        if selector.is_a?(Capybara::Node::Element)
+          selector
+        else
+          session.find(selector)
+        end
       rescue Capybara::ElementNotFound
         raise unless @allow_not_found
         Node("")

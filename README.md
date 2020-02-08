@@ -18,7 +18,7 @@ end
 Chop monkeypatches Cucumber tables with three new methods:
 
 * `#create!`: Creates entities. Built-in support for ActiveRecord (default) and FactoryGirl, at present.
-* `#diff!`: Enhances existing method to also accept a CSS selector. Currently supports diffing `<table>`, `<dl>`, `<ul>`, and even `<form>`!.
+* `#diff!`: Enhances existing method to also accept a capybara element, or a CSS selector pointing to one. Currently supports diffing `<table>`, `<dl>`, `<ul>`, and even `<form>`!.
 * `#fill_in!`: Fills in a form on the current page.
 
 All these methods accept blocks for customization.
