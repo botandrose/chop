@@ -173,6 +173,32 @@ describe Chop::Table do
         }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
       end
     end
+
+    context "with capybara element" do
+      let(:body) do
+        slim """
+          table
+            thead
+              tr: th A
+            tbody
+              tr: td 1
+              tr: td 2
+        """
+      end
+
+      let(:table) do
+        [
+          ["A"],
+          ["1"],
+          ["2"],
+        ]
+      end
+
+      it "accepts a capybara element as the first argument" do
+        element = Capybara.current_session.find("table")
+        described_class.diff! element, table_from(table)
+      end
+    end
   end
 
   describe "block methods" do

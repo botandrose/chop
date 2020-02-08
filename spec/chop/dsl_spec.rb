@@ -25,6 +25,13 @@ describe Chop::DSL do
       expect(table_class).to receive(:diff!).with(selector, table, session: session, &block)
       subject.diff! selector, table, session: session, &block
     end
+
+    it "accepts a capybara element as a diff target" do
+      element, table, session, block = double(tag_name: "Table"), double, double, Proc.new {}
+      table_class = stub_const "Chop::Table", double
+      expect(table_class).to receive(:diff!).with(element, table, session: session, &block)
+      subject.diff! element, table, session: session, &block
+    end
   end
 
   describe ".fill_in!" do
@@ -53,6 +60,12 @@ describe Chop::DSL do
         options = { as: :table }
         expect(Chop).to receive(:diff!).with(selector, table, options)
         table.diff!(selector, options)
+      end
+
+      it "accepts a capybara element as a diff target" do
+        element = double(tag_name: "Table")
+        expect(Chop).to receive(:diff!).with(element, table, {})
+        table.diff! element
       end
 
       it "assumes a 'table' selector and empty options" do
