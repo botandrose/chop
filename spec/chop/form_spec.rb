@@ -19,6 +19,58 @@ end
 using FileFieldFiles
 
 describe Chop::Form do
+  describe ".diff!" do
+    let(:app) do
+      Proc.new { [200, {"Content-Type" => "text/html"}, [body]] }
+    end
+
+    before do
+      Capybara.app = app
+      Capybara.server = :webrick
+      Capybara.current_session.visit("/")
+    end
+
+    describe ".diff!" do
+      let(:body) do
+        slim """
+          form
+            label for='a' A
+            input id='a' name='a' value='1'
+            label for='b' B
+            input id='b' name='b' value='2'
+        """
+      end
+
+      let(:form) do
+        [
+          ["A", "1"],
+          ["B", "2"],
+        ]
+      end
+
+      it "converts the selector to a table and diffs it with the supplied table" do
+        described_class.diff! "form", table_from(form)
+      end
+
+      it "fails the diff when the tables are different" do
+        expect {
+          described_class.diff! "form", table_from([["A","2"]])
+        }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
+      end
+
+      it "doesn't fail the diff when the rows are missing from assertion" do
+        expect {
+          described_class.diff! "form", table_from([[]])
+        }.to_not raise_exception
+      end
+
+      it "accepts a capybara element as a diff target" do
+        form_element = Capybara.current_session.find("form")
+        described_class.diff! form_element, table_from(form)
+      end
+    end
+  end
+
   describe ".fill_in!" do
     describe "texty fields" do
       %w(text email search tel url password month week date datetime time).each do |type|

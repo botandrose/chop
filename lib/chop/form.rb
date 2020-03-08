@@ -8,7 +8,18 @@ module Chop
     end
 
     def self.diff! selector, table, session: Capybara.current_session, &block
-      all_fields = session.find("form").all("input, textarea, select")
+      root = begin
+        if selector.is_a?(Capybara::Node::Element)
+          selector
+        else
+          session.find(selector)
+        end
+      rescue Capybara::ElementNotFound
+        raise unless @allow_not_found
+        Node("")
+      end
+
+      all_fields = root.all("input, textarea, select")
       relevant_fields = all_fields.inject([]) do |fields, field|
         next fields if field[:name].blank?
         next fields if field[:type] == "submit"
