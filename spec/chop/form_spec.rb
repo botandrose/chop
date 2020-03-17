@@ -31,42 +31,63 @@ describe Chop::Form do
     end
 
     describe ".diff!" do
-      let(:body) do
-        slim """
-          form
-            label for='a' A
-            input id='a' name='a' value='1'
-            label for='b' B
-            input id='b' name='b' value='2'
-        """
+      context "text boxes" do
+        let(:body) do
+          slim """
+            form
+              label for='a' A
+              input id='a' name='a' value='1'
+              label for='b' B
+              input id='b' name='b' value='2'
+          """
+        end
+
+        let(:form) do
+          [
+            ["A", "1"],
+            ["B", "2"],
+          ]
+        end
+
+        it "converts the selector to a table and diffs it with the supplied table" do
+          described_class.diff! "form", table_from(form)
+        end
+
+        it "fails the diff when the tables are different" do
+          expect {
+            described_class.diff! "form", table_from([["A","2"]])
+          }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
+        end
+
+        it "doesn't fail the diff when the rows are missing from assertion" do
+          expect {
+            described_class.diff! "form", table_from([[]])
+          }.to_not raise_exception
+        end
+
+        it "accepts a capybara element as a diff target" do
+          form_element = Capybara.current_session.find("form")
+          described_class.diff! form_element, table_from(form)
+        end
       end
 
-      let(:form) do
-        [
-          ["A", "1"],
-          ["B", "2"],
-        ]
-      end
+      context "multiple checkboxes" do
+        let(:body) do
+          slim <<~SLIM
+            form
+              label for="f_p" F
+              input type="checkbox" value="P" name="f[]" id="f_p"
+              label for="f_p" P
+              input type="checkbox" value="V" name="f[]" id="f_v" checked=true
+              label for="f_v" V
+              input type="checkbox" value="W" name="f[]" id="f_w" checked=true
+              label for="f_w" W
+          SLIM
+        end
 
-      it "converts the selector to a table and diffs it with the supplied table" do
-        described_class.diff! "form", table_from(form)
-      end
-
-      it "fails the diff when the tables are different" do
-        expect {
-          described_class.diff! "form", table_from([["A","2"]])
-        }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
-      end
-
-      it "doesn't fail the diff when the rows are missing from assertion" do
-        expect {
-          described_class.diff! "form", table_from([[]])
-        }.to_not raise_exception
-      end
-
-      it "accepts a capybara element as a diff target" do
-        form_element = Capybara.current_session.find("form")
-        described_class.diff! form_element, table_from(form)
+        it "joins the values with a comma" do
+          described_class.diff! "form", table_from([["F", "V, W"]])
+        end
       end
     end
   end

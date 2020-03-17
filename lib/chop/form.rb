@@ -113,6 +113,10 @@ module Chop
         end
       end
 
+      def get_value
+        checkboxes.select(&:checked?).map(&:value).join(", ")
+      end
+
       private
 
       def checkboxes
