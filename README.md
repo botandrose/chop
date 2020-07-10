@@ -33,8 +33,8 @@ Transform the attributes hash derived from the table before passing to `ActiveRe
 
 High-level declarative transformations:
 
-* `#file`: Replaces a file path with a file handle. Looks in `features/support/fixtures` by default.
-* `#files`: Replaces a space-delimited list of file paths with an array of file handles. Looks in `features/support/fixtures` by default.
+* `#file`: Replaces a file path with a file handle. Looks in `features/support/fixtures` by default. Set `upload: true` to wrap file in `Rack::Test::UploadedFile`.
+* `#files`: Replaces a space-delimited list of file paths with an array of file handles. Looks in `features/support/fixtures` by default. Set `upload: true` to wrap file in `Rack::Test::UploadedFile`.
 * `#has_one/#belongs_to`: Replaces an entity name with that entity. Uses `.find_by_name` by default.
 * `#has_many`: Replaces a comma-delimited list of entity names with an array of those entities. Uses `.find_by_name` by default.
 * `#underscore_keys`: Converts all hash keys to underscored versions.

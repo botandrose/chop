@@ -231,6 +231,18 @@ describe Chop::Create do
         end
         expect(records).to eq [{"image_file" => file}]
       end
+
+      it "wraps it in a Rack::Test::UploadedFile if configured with upload: true" do
+        file = double
+        stub_class = double
+        stub_const "Rack::Test::UploadedFile", stub_class
+        expect(stub_class).to receive(:new).with("features/support/fixtures/example.jpg").and_return(file)
+        table = double(hashes: [{"image" => "example.jpg"}])
+        records = described_class.create! klass, table do
+          file(:image, upload: true)
+        end
+        expect(records).to eq [{"image" => file}]
+      end
     end
 
     describe "#files" do
@@ -281,6 +293,17 @@ describe Chop::Create do
         expect(records).to eq [{"image_files" => [file_1, file_2]}]
       end
 
+      it "wraps files in Rack::Test::UploadedFile if configured with upload: true" do
+        file_1, file_2 = double, double
+        stub_class = double
+        stub_const "Rack::Test::UploadedFile", stub_class
+        expect(stub_class).to receive(:new).with("features/support/fixtures/example.jpg").and_return(file_1)
+        expect(stub_class).to receive(:new).with("features/support/fixtures/example.png").and_return(file_2)
+        records = described_class.create! klass, table do
+          files(:images, upload: true)
+        end
+        expect(records).to eq [{"images" => [file_1, file_2]}]
+      end
     end
 
     describe "#has_one/#belongs_to" do

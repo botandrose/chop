@@ -117,12 +117,20 @@ module Chop
     def file *keys
       options = extract_options!(keys)
       path = options.fetch(:path, "features/support/fixtures")
+      upload = options.fetch(:upload, false)
 
       handle_renames! keys
 
       keys.each do |key|
         field key do |file|
-          File.open(File.join(path, file)) if file.present?
+          if file.present?
+            file_path = File.join(path, file)
+            if upload
+              Rack::Test::UploadedFile.new(file_path)
+            else
+              File.open(file_path)
+            end
+          end
         end
       end
     end
@@ -130,6 +138,7 @@ module Chop
     def files *keys
       options = extract_options!(keys)
       path = options.fetch(:path, "features/support/fixtures")
+      upload = options.fetch(:upload, false)
       delimiter = options.fetch(:delimiter, " ")
 
       handle_renames! keys
@@ -137,7 +146,12 @@ module Chop
       keys.each do |key|
         field key do |paths|
           paths.split(delimiter).map do |file|
-            File.open(File.join(path, file))
+            file_path = File.join(path, file)
+            if upload
+              Rack::Test::UploadedFile.new(file_path)
+            else
+              File.open(file_path)
+            end
           end
         end
       end
