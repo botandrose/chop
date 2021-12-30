@@ -58,18 +58,26 @@ describe Chop::DSL do
       it "delegates to Chop.diff!" do
         selector = "table"
         options = { as: :table }
-        expect(Chop).to receive(:diff!).with(selector, table, options)
-        table.diff!(selector, options)
+        expect(Chop).to receive(:diff!).with(selector, table, **options)
+        table.diff!(selector, **options)
       end
 
       it "accepts a capybara element as a diff target" do
         element = double(tag_name: "Table")
-        expect(Chop).to receive(:diff!).with(element, table, {})
+        if ruby_2_7_or_greater?
+          expect(Chop).to receive(:diff!).with(element, table)
+        else
+          expect(Chop).to receive(:diff!).with(element, table, {})
+        end
         table.diff! element
       end
 
       it "assumes a 'table' selector and empty options" do
-        expect(Chop).to receive(:diff!).with("table", table, {})
+        if ruby_2_7_or_greater?
+          expect(Chop).to receive(:diff!).with("table", table)
+        else
+          expect(Chop).to receive(:diff!).with("table", table, {})
+        end
         table.diff!
       end
     end

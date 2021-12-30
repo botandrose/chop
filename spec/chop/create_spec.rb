@@ -122,7 +122,7 @@ describe Chop::Create do
 
       it "supports syntactic sugar for renaming on the fly" do
         records = described_class.create! klass, table do
-          field(:a => :b) { |a| a * 2 }
+          field({:a => :b}) { |a| a * 2 }
         end
         expect(records).to eq [{"b" => 2}, {"b" => 4}]
       end
