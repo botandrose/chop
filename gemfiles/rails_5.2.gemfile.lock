@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    chop (0.26.0)
+    chop (0.26.1)
       activerecord
       capybara
       cucumber
