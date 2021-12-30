@@ -2,7 +2,7 @@
 
 Slice and dice your Cucumber tables with ease! Assumes usage of ActiveRecord and Capybara.
 
-[![Build Status](https://travis-ci.org/botandrose/chop.svg?branch=master)](https://travis-ci.org/botandrose/chop)
+[![Build Status](https://github.com/botandrose/chop/workflows/CI/badge.svg?branch=master)](https://github.com/botandrose/chop/actions?query=workflow%3ACI+branch%3Amaster)
 [![Code Climate](https://codeclimate.com/github/botandrose/chop/badges/gpa.svg)](https://codeclimate.com/github/botandrose/chop)
 
 ## Installation
