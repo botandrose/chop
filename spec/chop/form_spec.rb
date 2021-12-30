@@ -2,17 +2,13 @@ require "spec_helper"
 require "chop/form"
 require "cucumber"
 require "capybara"
-require "capybara/poltergeist"
+require "capybara/cuprite"
 require "slim"
 
 module FileFieldFiles
   refine Capybara::Node::Element do
     def files
-      id = self["id"]
-      session.evaluate_script("document.getElementById('#{id}').files").inject([]) do |files, (key, hash)|
-        files << hash["name"] if key =~ /^\d+$/
-        files
-      end
+      session.evaluate_script("Array.prototype.map.call(document.getElementById('#{self["id"]}').files, function(file) { return file.name })")
     end
   end
 end
@@ -94,7 +90,7 @@ describe Chop::Form do
 
   describe ".fill_in!" do
     describe "texty fields" do
-      %w(text email search tel url password month week date datetime time).each do |type|
+      %w(text email search tel url password datetime).each do |type|
         it "fills in #{type} fields" do
           session = test_app <<-SLIM
             label for="f" F
@@ -104,6 +100,42 @@ describe Chop::Form do
           expect(session.find_field("F").value).to eq "V"
         end
       end
+    end
+
+    it "fills in time fields" do
+      session = test_app <<-SLIM
+        label for="f" F
+        input id="f" type="time"
+      SLIM
+      described_class.fill_in! table_from([["F", "12:33:45"]])
+      expect(session.find_field("F").value).to eq "12:33:45"
+    end
+
+    it "fills in date fields" do
+      session = test_app <<-SLIM
+        label for="f" F
+        input id="f" type="date"
+      SLIM
+      described_class.fill_in! table_from([["F", "2020-06-19"]])
+      expect(session.find_field("F").value).to eq "2020-06-19"
+    end
+
+    it "fills in week fields" do
+      session = test_app <<-SLIM
+        label for="f" F
+        input id="f" type="week"
+      SLIM
+      described_class.fill_in! table_from([["F", "2020-W06"]])
+      expect(session.find_field("F").value).to eq "2020-W06"
+    end
+
+    it "fills in month fields" do
+      session = test_app <<-SLIM
+        label for="f" F
+        input id="f" type="month"
+      SLIM
+      described_class.fill_in! table_from([["F", "2020-06"]])
+      expect(session.find_field("F").value).to eq "2020-06"
     end
 
     it "fills in range fields" do
@@ -324,7 +356,7 @@ describe Chop::Form do
   def test_app template
     Capybara.app = slim_app(template)
     Capybara.server = :webrick
-    Capybara.default_driver = :poltergeist
+    Capybara.default_driver = :cuprite
     session = Capybara.current_session
     session.visit("/")
     session

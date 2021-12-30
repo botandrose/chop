@@ -4,6 +4,5 @@ source 'https://rubygems.org'
 gemspec
 
 gem "byebug"
-gem "poltergeist"
-gem "phantomjs-binaries"
+gem "cuprite"
 

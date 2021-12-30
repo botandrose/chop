@@ -217,13 +217,13 @@ module Chop
       end
     end
 
-    class Range < Field
+    class ViaJavascript < Field
       def matches?
-        field[:type] == "range"
+        %w[time week month range].include?(field[:type])
       end
 
       def fill_in!
-        session.execute_script("document.getElementById('#{field[:id]}').value = #{value}")
+        session.execute_script("document.getElementById('#{field[:id]}').value = '#{value}'")
       end
     end
 
