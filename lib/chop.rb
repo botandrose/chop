@@ -11,5 +11,9 @@ require "chop/config"
 module Chop
   extend DSL
   extend Config
+
+  def self.empty_table
+    Cucumber::MultilineArgument::DataTable.from([[]])
+  end
 end
 
