@@ -4,9 +4,9 @@ require "active_support/core_ext/class/attribute"
 require "active_support/hash_with_indifferent_access"
 
 module Chop
-  class Diff < Struct.new(:selector, :table, :session, :block)
-    def self.diff! selector, table, session: Capybara.current_session, &block
-      new(selector, table, session, block).diff!
+  class Diff < Struct.new(:selector, :table, :session, :timeout, :block)
+    def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, &block
+      new(selector, table, session, timeout, block).diff!
     end
 
     def cell_to_image_filename cell
@@ -23,7 +23,7 @@ module Chop
 
     attr_accessor :header_transformations, :transformations
 
-    def initialize selector = nil, table = nil, session = Capybara.current_session, block = nil, &other_block
+    def initialize selector = nil, table = nil, session = Capybara.current_session, timeout = Capybara.default_max_wait_time, block = nil, &other_block
       super
       self.selector ||= default_selector
       self.header_transformations = []
@@ -160,7 +160,7 @@ module Chop
         if selector.is_a?(Capybara::Node::Element)
           selector
         else
-          session.find(selector)
+          session.find(selector, wait: timeout)
         end
       rescue Capybara::ElementNotFound
         raise unless @allow_not_found

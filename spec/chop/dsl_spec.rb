@@ -1,4 +1,5 @@
 require 'cucumber'
+require 'chop'
 require 'chop/dsl'
 
 describe Chop::DSL do
@@ -31,6 +32,13 @@ describe Chop::DSL do
       table_class = stub_const "Chop::Table", double
       expect(table_class).to receive(:diff!).with(element, table, session: session, &block)
       subject.diff! element, table, session: session, &block
+    end
+
+    it "accepts a 'timeout' option" do
+      element, table, session, block = double(tag_name: "Table"), double, double, Proc.new {}
+      table_class = stub_const "Chop::Table", double
+      expect(table_class).to receive(:diff!).with(element, table, session: session, timeout: 30, &block)
+      subject.diff! element, table, session: session, timeout: 30, &block
     end
   end
 
@@ -73,6 +81,11 @@ describe Chop::DSL do
       it "assumes a 'table' selector and empty options" do
         expect(subject).to receive(:diff!).with("table", table, **{})
         table.diff!
+      end
+
+      it "accepts a 'timeout' option" do
+        expect(subject).to receive(:diff!).with("table", table, timeout: 30)
+        table.diff! timeout: 30
       end
     end
 

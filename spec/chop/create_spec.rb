@@ -33,8 +33,8 @@ describe Chop::Create do
 
   describe "#create!" do
     it "creates a record for each row in the table" do
-      expect(klass).to receive(:create!).with("a" => 1)
-      expect(klass).to receive(:create!).with("a" => 2)
+      expect(klass).to receive(:create!).with({"a" => 1})
+      expect(klass).to receive(:create!).with({"a" => 2})
       described_class.new(klass, table).create!
     end
 
@@ -48,14 +48,14 @@ describe Chop::Create do
     it "supports integration with FactoryGirl" do
       factory_girl = double
       stub_const("FactoryGirl", factory_girl)
-      allow(factory_girl).to receive(:create).with("factory_name", "a" => 1)
-      allow(factory_girl).to receive(:create).with("factory_name", "a" => 2)
+      allow(factory_girl).to receive(:create).with("factory_name", {"a" => 1})
+      allow(factory_girl).to receive(:create).with("factory_name", {"a" => 2})
       described_class.new({ factory_girl: "factory_name" }, table).create!
     end
 
     it "optionally can accept a table as an argument" do
-      expect(klass).to receive(:create!).with("a" => 1)
-      expect(klass).to receive(:create!).with("a" => 2)
+      expect(klass).to receive(:create!).with({"a" => 1})
+      expect(klass).to receive(:create!).with({"a" => 2})
       described_class.new(klass).create! table
     end
   end
