@@ -4,5 +4,6 @@ source 'https://rubygems.org'
 gemspec
 
 gem "byebug"
-gem "webrick"
+gem "puma", "~>5.0"
+gem "rack", "~>2.0"
 

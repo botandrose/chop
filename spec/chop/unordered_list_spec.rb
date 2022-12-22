@@ -2,6 +2,7 @@ require "spec_helper"
 require "chop/unordered_list"
 require "cucumber"
 require "capybara"
+require "puma"
 require "slim"
 
 describe Chop::UnorderedList do
@@ -11,7 +12,7 @@ describe Chop::UnorderedList do
 
   before do
     Capybara.app = app
-    Capybara.server = :webrick
+    Capybara.server = :puma, { Silent: true }
     Capybara.current_session.visit("/")
   end
 

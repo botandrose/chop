@@ -3,6 +3,7 @@ require "chop/form"
 require "cucumber"
 require "capybara"
 require "capybara/cuprite"
+require "puma"
 require "slim"
 
 module FileFieldFiles
@@ -22,7 +23,7 @@ describe Chop::Form do
 
     before do
       Capybara.app = app
-      Capybara.server = :webrick
+      Capybara.server = :puma, { Silent: true }
       Capybara.current_session.visit("/")
     end
 
@@ -355,7 +356,7 @@ describe Chop::Form do
 
   def test_app template
     Capybara.app = slim_app(template)
-    Capybara.server = :webrick
+    Capybara.server = :puma, { Silent: true }
     Capybara.default_driver = :cuprite
     session = Capybara.current_session
     session.visit("/")

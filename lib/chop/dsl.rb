@@ -2,6 +2,8 @@ require "active_support/inflector"
 
 module Chop
   module DSL
+    extend self
+
     def create! klass, table, &block
       Create.create! klass, table, &block
     end
@@ -22,25 +24,25 @@ module Chop
       Form.fill_in! table
     end
   end
-end
 
-if defined?(Cucumber::MultilineArgument::DataTable)
-  Cucumber::MultilineArgument::DataTable.prepend Module.new {
-    def create! klass, &block
-      Chop.create! klass, self, &block
-    end
-
-    def diff! other_table="table", **kwargs, &block
-      if other_table.respond_to?(:tag_name) || (other_table.is_a?(String) && !other_table.include?("|"))
-        Chop.diff! other_table, self, **kwargs, &block
-      else
-        super
+  if defined?(Cucumber::MultilineArgument::DataTable)
+    Cucumber::MultilineArgument::DataTable.prepend Module.new {
+      def create! klass, &block
+        DSL.create! klass, self, &block
       end
-    end
 
-    def fill_in!
-      Chop.fill_in! self
-    end
-  }
+      def diff! other_table="table", **kwargs, &block
+        if other_table.respond_to?(:tag_name) || (other_table.is_a?(String) && !other_table.include?("|"))
+          DSL.diff! other_table, self, **kwargs, &block
+        else
+          super
+        end
+      end
+
+      def fill_in!
+        DSL.fill_in! self
+      end
+    }
+  end
 end
 

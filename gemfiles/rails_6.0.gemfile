@@ -3,8 +3,8 @@
 source "https://rubygems.org"
 
 gem "byebug"
-gem "webrick"
+gem "puma", "~>5.0"
+gem "rack", "~>2.0"
 gem "rails", "~>6.0.0"
-gem "capybara", "~>3.35.0"
 
 gemspec path: "../"

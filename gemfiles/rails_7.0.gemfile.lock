@@ -154,6 +154,8 @@ GEM
       mini_portile2 (~> 2.6.1)
       racc (~> 1.4)
     public_suffix (4.0.6)
+    puma (5.6.5)
+      nio4r (~> 2.0)
     racc (1.6.0)
     rack (2.2.3)
     rack-test (1.1.0)
@@ -209,7 +211,6 @@ GEM
     tilt (2.0.10)
     tzinfo (2.0.4)
       concurrent-ruby (~> 1.0)
-    webrick (1.7.0)
     websocket-driver (0.7.5)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
@@ -225,11 +226,12 @@ DEPENDENCIES
   byebug
   chop!
   cuprite
+  puma (~> 5.0)
+  rack (~> 2.0)
   rails (~> 7.0.0)
   rake
   rspec
   slim
-  webrick
 
 BUNDLED WITH
    2.2.32

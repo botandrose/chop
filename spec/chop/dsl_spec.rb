@@ -44,47 +44,41 @@ describe Chop::DSL do
   end
 
   describe "monkeypatched methods on Cucumber::MultilineArgument::DataTable" do
+    subject { Chop::DSL }
+
     let(:table) { Cucumber::MultilineArgument::DataTable.from([[]]) }
 
     describe "#create!" do
-      it "delegates to Chop.create" do
+      it "delegates to Chop::DSL.create" do
         klass = double
-        expect(Chop).to receive(:create!).with(klass, table)
+        expect(subject).to receive(:create!).with(klass, table)
         table.create!(klass)
       end
     end
 
     describe "#diff!" do
-      it "delegates to Chop.diff!" do
+      it "delegates to Chop::DSL.diff!" do
         selector = "table"
         options = { as: :table }
-        expect(Chop).to receive(:diff!).with(selector, table, **options)
+        expect(subject).to receive(:diff!).with(selector, table, **options)
         table.diff!(selector, **options)
       end
 
       it "accepts a capybara element as a diff target" do
         element = double(tag_name: "Table")
-        if ruby_2_7_or_greater?
-          expect(Chop).to receive(:diff!).with(element, table)
-        else
-          expect(Chop).to receive(:diff!).with(element, table, {})
-        end
+        expect(subject).to receive(:diff!).with(element, table, **{})
         table.diff! element
       end
 
       it "assumes a 'table' selector and empty options" do
-        if ruby_2_7_or_greater?
-          expect(Chop).to receive(:diff!).with("table", table)
-        else
-          expect(Chop).to receive(:diff!).with("table", table, {})
-        end
+        expect(subject).to receive(:diff!).with("table", table, **{})
         table.diff!
       end
     end
 
     describe "#fill_in!" do
-      it "delegates to Chop.fill_in!" do
-        expect(Chop).to receive(:fill_in!).with(table)
+      it "delegates to Chop::DSL.fill_in!" do
+        expect(subject).to receive(:fill_in!).with(table)
         table.fill_in!
       end
     end
