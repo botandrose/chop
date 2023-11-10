@@ -42,7 +42,7 @@ module Chop
       if field[:id].present?
         session.first("label[for='#{field[:id]}']", visible: :all)
       else
-        raise "cannot find label without id... yet"
+        puts "cannot find label without id for #{field[:name]}"
       end
     end
 
