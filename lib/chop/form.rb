@@ -40,7 +40,7 @@ module Chop
 
     def self.find_label_for field, session: Capybara.current_session
       if field[:id].present?
-        session.first("label[for='#{field[:id]}']", visible: :all)
+        session.first("label[for='#{field[:id]}']", visible: :all, minimum: 0, wait: 0.1)
       else
         puts "cannot find label without id for #{field[:name]}"
       end
