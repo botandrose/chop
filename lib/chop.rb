@@ -15,7 +15,7 @@ module Chop
   def self.empty_table
     empty = Cucumber::MultilineArgument::DataTable.from([[]])
 
-    def empty.diff! ...
+    def empty.diff!(...)
       super
     rescue Capybara::ElementNotFound
     end
