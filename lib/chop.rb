@@ -13,7 +13,14 @@ module Chop
   extend Config
 
   def self.empty_table
-    Cucumber::MultilineArgument::DataTable.from([[]])
+    empty = Cucumber::MultilineArgument::DataTable.from([[]])
+
+    def empty.diff! ...
+      super
+    rescue Capybara::ElementNotFound
+    end
+
+    empty
   end
 end
 
