@@ -157,19 +157,19 @@ module Chop
       end
     end
 
-    def has_many key, klass=nil, delimiter: ", ", name_field: :name
+    def has_many key, klass=nil, delimiter: ", ", field: :name
       klass ||= key.to_s.classify.constantize
-      field key do |names|
+      self.field key do |names|
         names.split(delimiter).map do |name|
-          klass.find_by!(name_field => name)
+          klass.find_by!(field => name)
         end
       end
     end
 
-    def has_one key, klass=nil, name_field: :name
+    def has_one key, klass=nil, field: :name
       klass ||= key.to_s.classify.constantize
-      field key do |name|
-        klass.find_by!(name_field => name) if name.present?
+      self.field key do |name|
+        klass.find_by!(field => name) if name.present?
       end
     end
     alias_method :belongs_to, :has_one
