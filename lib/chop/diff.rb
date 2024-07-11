@@ -5,8 +5,12 @@ require "active_support/hash_with_indifferent_access"
 
 module Chop
   class Diff < Struct.new(:selector, :table, :session, :timeout, :block)
-    def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, &block
-      new(selector, table, session, timeout, block).diff!
+    def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, errors: [], &block
+      errors += session.driver.invalid_element_errors
+      errors += [Cucumber::MultilineArgument::DataTable::Different]
+      session.document.synchronize timeout, errors: errors do
+        new(selector, table, session, timeout, block).diff!
+      end
     end
 
     def cell_to_image_filename cell
