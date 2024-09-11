@@ -86,6 +86,21 @@ describe Chop::Form do
           described_class.diff! "form", table_from([["F", "V, W"]])
         end
       end
+
+      context "select fields" do
+        let(:body) do
+          slim <<~SLIM
+            form
+              label for="F" F
+              select id="F" name="F"
+                option selected=true value="v" V
+          SLIM
+        end
+
+        it "it gets the selected option's text" do
+          described_class.diff! "form", table_from([["F", "V"]])
+        end
+      end
     end
   end
 

@@ -100,6 +100,12 @@ module Chop
       def fill_in!
         session.select value, from: label
       end
+
+      def get_value
+        if selected_value = field.value
+          field.find("option[value='#{selected_value}']").text
+        end
+      end
     end
 
     class MultipleCheckbox < Field
