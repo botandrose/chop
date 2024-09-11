@@ -8,7 +8,7 @@ module Chop
       Create.create! klass, table, &block
     end
 
-    def diff! selector, table, session: Capybara.current_session, as: nil, timeout: nil, &block
+    def diff! selector, table, session: Capybara.current_session, as: nil, timeout: nil, **kwargs, &block
       class_name = if as
         as.to_s
       elsif selector.respond_to?(:tag_name)
@@ -17,7 +17,7 @@ module Chop
         session.find(selector).tag_name
       end.camelize
       klass = const_get("Chop::#{class_name}")
-      kwargs = { session: session }
+      kwargs[:session] = session
       kwargs[:timeout] = timeout if timeout.present?
       klass.diff! selector, table, **kwargs, &block
     end

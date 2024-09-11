@@ -5,11 +5,11 @@ require "active_support/hash_with_indifferent_access"
 
 module Chop
   class Diff < Struct.new(:selector, :table, :session, :timeout, :block)
-    def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, errors: [], &block
+    def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, errors: [], **kwargs, &block
       errors += session.driver.invalid_element_errors
       errors += [Cucumber::MultilineArgument::DataTable::Different]
       session.document.synchronize timeout, errors: errors do
-        new(selector, table, session, timeout, block).diff!
+        new(selector, table, session, timeout, block).diff! **kwargs
       end
     end
 
@@ -139,11 +139,11 @@ module Chop
       end
     end
 
-    def diff! cucumber_table = table
+    def diff! cucumber_table = table, **kwargs
       actual = to_a
       # FIXME should just delegate to Cucumber's #diff!. Cucumber needs to handle empty tables better.
       if !cucumber_table.raw.flatten.empty? && !actual.flatten.empty?
-        cucumber_table.diff! actual
+        cucumber_table.diff! actual, **kwargs
       elsif cucumber_table.raw.flatten != actual.flatten
         raise Cucumber::MultilineArgument::DataTable::Different.new(cucumber_table)
       end

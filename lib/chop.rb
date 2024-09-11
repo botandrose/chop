@@ -1,4 +1,5 @@
 require "chop/version"
+require "cucumber"
 require "chop/create"
 require "chop/table"
 require "chop/definition_list"
@@ -15,8 +16,8 @@ module Chop
   def self.empty_table
     empty = Cucumber::MultilineArgument::DataTable.from([[]])
 
-    def empty.diff!(...)
-      super
+    def empty.diff! other_table, **kwargs, &block
+      super other_table, **kwargs.reverse_merge(surplus_col: true, surplus_row: true), &block
     rescue Capybara::ElementNotFound
     end
 
