@@ -41,6 +41,22 @@ describe Chop::UnorderedList do
         described_class.diff! "ul", table_from([[]])
       }.to raise_exception(Cucumber::MultilineArgument::DataTable::Different)
     end
+
+    describe "#column" do
+      let(:ul) do
+        [
+          ["2"],
+          ["4"],
+        ]
+      end
+      it "transforms a column by index" do
+        described_class.diff! "ul", table_from(ul) do
+          column 0 do |cell|
+            cell.text.to_i * 2
+          end
+        end
+      end
+    end
   end 
 
   def table_from table

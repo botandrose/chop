@@ -1,7 +1,7 @@
-require "chop/diff"
+require "chop/definition_list"
       
 module Chop
-  class UnorderedList < Diff
+  class UnorderedList < DefinitionList
     self.default_selector = "ul"
     self.rows_finder = ->(root) { root.all("li") }
     self.cells_finder = ->(row) { [row] }
