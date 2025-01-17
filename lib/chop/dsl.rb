@@ -35,7 +35,7 @@ module Chop
 
       def diff! other_table="table", **kwargs, &block
         if other_table.respond_to?(:tag_name) || (other_table.is_a?(String) && !other_table.include?("|"))
-          DSL.diff! other_table, self, **kwargs, &block
+          DSL.diff! other_table, self.dup, **kwargs, &block
         else
           super
         end
