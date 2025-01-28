@@ -35,6 +35,7 @@ module Chop
         field = Field.from(session, field)
         fields + [[label.text(:all), field.get_value.to_s]]
       end
+      block.call(actual, root) if block_given?
       table.diff! actual, surplus_row: false, misplaced_col: false
     end
 
