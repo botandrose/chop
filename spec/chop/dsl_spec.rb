@@ -54,7 +54,11 @@ describe Chop::DSL do
   describe "monkeypatched methods on Cucumber::MultilineArgument::DataTable" do
     subject { Chop::DSL }
 
-    let(:table) { Cucumber::MultilineArgument::DataTable.from([[]]) }
+    let(:table) do
+      table = Cucumber::MultilineArgument::DataTable.from([[]])
+      def table.dup = self
+      table
+    end
 
     describe "#create!" do
       it "delegates to Chop::DSL.create" do
@@ -68,8 +72,9 @@ describe Chop::DSL do
       it "delegates to Chop::DSL.diff!" do
         selector = "table"
         options = { as: :table }
-        expect(subject).to receive(:diff!).with(selector, table, **options)
-        table.diff!(selector, **options)
+        block = proc {}
+        expect(subject).to receive(:diff!).with(selector, table, **options, &block)
+        table.diff!(selector, **options, &block)
       end
 
       it "accepts a capybara element as a diff target" do
