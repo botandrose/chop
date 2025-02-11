@@ -17,8 +17,14 @@ module Chop
     empty = Cucumber::MultilineArgument::DataTable.from([[]])
 
     def empty.diff! other_table, **kwargs, &block
+      if other_table.is_a?(String)
+        begin
+          other_table = Capybara.current_session.find(other_table)
+        rescue Capybara::ElementNotFound
+          return
+        end
+      end
       super other_table, **kwargs.reverse_merge(surplus_col: true, surplus_row: true), &block
-    rescue Capybara::ElementNotFound
     end
 
     empty
