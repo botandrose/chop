@@ -14,7 +14,7 @@ module Chop
   extend Config
 
   def self.empty_table
-    empty = Cucumber::MultilineArgument::DataTable.from([[]])
+    empty = table([[]])
 
     def empty.diff! other_table, **kwargs, &block
       if other_table.is_a?(String)
@@ -28,6 +28,10 @@ module Chop
     end
 
     empty
+  end
+
+  def self.table(raw)
+    Cucumber::MultilineArgument::DataTable.from(raw)
   end
 end
 
