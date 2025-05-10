@@ -80,7 +80,7 @@ module Chop
 
     class MultipleSelect < Field
       def matches?
-        field.tag_name == "select" && field[:multiple]
+        field.tag_name == "select" && field[:multiple].to_s == "true"
       end
 
       def fill_in!
@@ -95,7 +95,7 @@ module Chop
 
     class Select < Field
       def matches?
-        field.tag_name == "select" && !field[:multiple]
+        field.tag_name == "select" && field[:multiple].to_s == "false"
       end
 
       def fill_in!
