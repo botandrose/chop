@@ -387,6 +387,48 @@ describe Chop::Create do
       end
     end
 
+    describe ":find_by alias" do
+      describe "#has_one" do
+        it "works as an alias for :field parameter" do
+          user_class, micah = double, double
+          allow(user_class).to receive(:find_by!).with(email: "micah@example.com").and_return(micah)
+          stub_const("User", user_class)
+          table = double(hashes: [{"user" => "micah@example.com"}])
+          records = described_class.create! klass, table do
+            has_one(:user, User, find_by: :email)
+          end
+          expect(records).to eq [{"user" => micah}]
+        end
+      end
+
+      describe "#belongs_to" do
+        it "works as an alias for :field parameter" do
+          user_class, micah = double, double
+          allow(user_class).to receive(:find_by!).with(slug: "micah-geisel").and_return(micah)
+          stub_const("User", user_class)
+          table = double(hashes: [{"user" => "micah-geisel"}])
+          records = described_class.create! klass, table do
+            belongs_to(:user, User, find_by: :slug)
+          end
+          expect(records).to eq [{"user" => micah}]
+        end
+      end
+
+      describe "#has_many" do
+        it "works as an alias for :field parameter" do
+          user_class, micah, michael = double, double, double
+          allow(user_class).to receive(:find_by!).with(email: "micah@example.com").and_return(micah)
+          allow(user_class).to receive(:find_by!).with(email: "michael@example.com").and_return(michael)
+          stub_const("User", user_class)
+          table = double(hashes: [{"users" => "micah@example.com, michael@example.com"}])
+          records = described_class.create! klass, table do
+            has_many(:users, User, find_by: :email)
+          end
+          expect(records).to eq [{"users" => [micah, michael]}]
+        end
+      end
+    end
+
     describe "#after" do
       it "yields each created record" do
         after_records = []
