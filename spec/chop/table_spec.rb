@@ -622,7 +622,7 @@ describe Chop::Table do
                 td: img src='/path/to/1.jpg?123456'
                 td 1
               tr
-                td: img src='http://example.com/path/2-3a679bd0da8d45d2bf257420f948e1fe1b981b0d8cbac67d9992f22d61d5767e.jpg'
+                td: img src='/path/to/2-3a679bd0da8d45d2bf257420f948e1fe1b981b0d8cbac67d9992f22d61d5767e.jpg'
                 td 2
         """
       end
