@@ -5,14 +5,17 @@ require "capybara"
 require "puma"
 require "slim"
 
+Capybara.server = :puma, { Silent: true }
+
 describe Chop::DefinitionList do
   let(:app) do
     Proc.new { [200, {"Content-Type" => "text/html"}, [body]] }
   end
 
   before do
+    Capybara.reset_sessions!
     Capybara.app = app
-    Capybara.server = :puma, { Silent: true }
+    Capybara.use_default_driver
     Capybara.current_session.visit("/")
   end
 

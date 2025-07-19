@@ -6,6 +6,11 @@ require "capybara/cuprite"
 require "puma"
 require "slim"
 
+Capybara.server = :puma, { Silent: true }
+Capybara.register_driver :cuprite do |app|
+  Capybara::Cuprite::Driver.new(app)
+end
+
 module FileFieldFiles
   refine Capybara::Node::Element do
     def files
@@ -22,8 +27,8 @@ describe Chop::Form do
     end
 
     before do
+      Capybara.reset_sessions!
       Capybara.app = app
-      Capybara.server = :puma, { Silent: true }
       Capybara.current_session.visit("/")
     end
 
@@ -88,6 +93,15 @@ describe Chop::Form do
       end
 
       context "select fields" do
+        before do
+          Capybara.current_driver = :cuprite
+          Capybara.current_session.visit("/")
+        end
+
+        after do
+          Capybara.use_default_driver
+        end
+
         let(:body) do
           slim <<~SLIM
             form
@@ -316,6 +330,14 @@ describe Chop::Form do
     end
 
     describe "file fields" do
+      before do
+        Capybara.current_driver = :cuprite
+      end
+
+      after do
+        Capybara.use_default_driver
+      end
+
       context "single file field" do
         let!(:session) { test_app <<-SLIM }
           label for="f" F
@@ -370,9 +392,9 @@ describe Chop::Form do
   end
 
   def test_app template
+    Capybara.reset_sessions!
     Capybara.app = slim_app(template)
-    Capybara.server = :puma, { Silent: true }
-    Capybara.default_driver = :cuprite
+    Capybara.current_driver = :cuprite
     session = Capybara.current_session
     session.visit("/")
     session
