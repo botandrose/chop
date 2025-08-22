@@ -36,9 +36,63 @@ module Chop
       end
     end
 
+    class FieldFinder
+      def initialize(session, css_selector)
+        @session = session
+        @css_selector = css_selector
+      end
+
+      def find(locator)
+        return nil if locator.nil?
+
+        @locator = locator.to_s
+        @all_fields = @session.all(@css_selector)
+
+        find_by_direct_attributes ||
+        find_by_aria_label ||
+        find_by_associated_label ||
+        find_by_wrapping_label ||
+        raise_not_found
+      end
+
+      private
+
+      def find_by_direct_attributes
+        @all_fields.find do |field|
+          field[:id] == @locator ||
+          field[:name] == @locator ||
+          field[:placeholder] == @locator
+        end
+      end
+
+      def find_by_aria_label
+        @all_fields.find { |field| field[:'aria-label'] == @locator }
+      end
+
+      def find_by_associated_label
+        @all_fields.find do |field|
+          field[:id].present? &&
+          @session.first("label[for='#{field[:id]}']", visible: :all, minimum: 0, wait: 0.1)&.text(:all) == @locator
+        end
+      end
+
+      def find_by_wrapping_label
+        wrapping_label = @session.all("label", text: @locator, visible: :all, minimum: 0, wait: 0.1).find do |label|
+          label.find(@css_selector, visible: :all, minimum: 0, wait: 0.1)
+        rescue Capybara::ElementNotFound
+          false
+        end
+        wrapping_label&.find(@css_selector, visible: :all, minimum: 0, wait: 0.1)
+      end
+
+      def raise_not_found
+        raise Capybara::ElementNotFound, "Unable to find field #{@locator.inspect}"
+      end
+    end
+
     class Field < Struct.new(:session, :label, :value, :path, :field)
       def self.for session, label, value, path
-        field = session.find_field(label)
+        field = FieldFinder.new(session, combined_css_selector).find(label)
         candidates.map do |klass|
           klass.new(session, label, value, path, field)
         end.find(&:matches?)
