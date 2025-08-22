@@ -19,33 +19,16 @@ module Chop
         Node("")
       end
 
-      all_fields = root.all("input, textarea, select")
-      relevant_fields = all_fields.inject([]) do |fields, field|
-        next fields if field[:name].blank?
-        next fields if field[:type] == "submit"
-        next fields if field[:type] == "hidden"
-        fields + [field]
-      end
-      deduplicated_fields = relevant_fields.inject([]) do |fields, field|
-        next fields if fields.map { |field| field[:name] }.include?(field[:name])
-        fields + [field]
-      end
-      actual = deduplicated_fields.inject([]) do |fields, field|
-        next fields unless label = find_label_for(field)
-        field = Field.from(session, field)
-        fields + [[label.text(:all), field.get_value.to_s]]
-      end
+      actual = root.all(Field.combined_css_selector)
+        .filter_map { |field_element| Field.from(session, field_element) }
+        .select(&:should_include_in_diff?)
+        .uniq { |field| field.field[:name] }
+        .filter_map(&:to_diff_row)
+
       block.call(actual, root) if block_given?
       table.diff! actual, surplus_row: false, misplaced_col: false
     end
 
-    def self.find_label_for field, session: Capybara.current_session
-      if field[:id].present?
-        session.first("label[for='#{field[:id]}']", visible: :all, minimum: 0, wait: 0.1)
-      else
-        puts "cannot find label without id for #{field[:name]}"
-      end
-    end
 
     def fill_in!
       table.rows_hash.each do |label, value|
@@ -73,12 +56,49 @@ module Chop
         end
       end
 
+      def self.css_selector
+        "input"
+      end
+
+      def self.combined_css_selector
+        candidates.map(&:css_selector).uniq.join(", ")
+      end
+
       def get_value
         field.value
+      end
+
+      def should_include_in_diff?
+        field[:name].present? &&
+          field[:type] != "submit" &&
+          field[:type] != "hidden"
+      end
+
+      def label_text
+        return nil unless field[:id].present?
+        label_element = session.first("label[for='#{field[:id]}']", visible: :all, minimum: 0, wait: 0.1)
+        label_element&.text(:all)
+      end
+
+      def to_diff_row
+        return nil unless label = label_text
+        [label, diff_value]
+      end
+
+      def diff_value
+        get_value.to_s
+      end
+
+      def fill_in!
+        field.set value
       end
     end
 
     class MultipleSelect < Field
+      def self.css_selector
+        "select"
+      end
+
       def matches?
         field.tag_name == "select" && field[:multiple].to_s == "true"
       end
@@ -94,6 +114,10 @@ module Chop
     end
 
     class Select < Field
+      def self.css_selector
+        "select"
+      end
+
       def matches?
         field.tag_name == "select" && field[:multiple].to_s == "false"
       end
@@ -106,6 +130,10 @@ module Chop
         if selected_value = field.value
           field.find("option[value='#{selected_value}']").text
         end
+      end
+
+      def diff_value
+        get_value.to_s
       end
     end
 
@@ -122,6 +150,10 @@ module Chop
 
       def get_value
         checkboxes.select(&:checked?).map(&:value).join(", ")
+      end
+
+      def diff_value
+        get_value
       end
 
       private
@@ -148,6 +180,10 @@ module Chop
 
       def get_value
         field.checked? ? "✓" : ""
+      end
+
+      def diff_value
+        get_value
       end
     end
 
@@ -236,13 +272,19 @@ module Chop
       end
     end
 
+    class Textarea < Field
+      def self.css_selector
+        "textarea"
+      end
+
+      def matches?
+        field.tag_name == "textarea"
+      end
+    end
+
     class Default < Field
       def matches?
         true
-      end
-
-      def fill_in!
-        field.set value
       end
     end
   end
