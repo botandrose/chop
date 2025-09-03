@@ -8,7 +8,7 @@ require "slim"
 
 Capybara.server = :puma, { Silent: true }
 Capybara.register_driver :cuprite do |app|
-  Capybara::Cuprite::Driver.new(app)
+  Capybara::Cuprite::Driver.new(app, process_timeout: 20)
 end
 
 module FileFieldFiles
