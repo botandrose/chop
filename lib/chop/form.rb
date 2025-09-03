@@ -71,9 +71,13 @@ module Chop
 
       def find_by_associated_label
         @all_fields.find do |field|
-          field[:id].present? &&
-            @session.first("label[for='#{field[:id]}']", visible: :all, minimum: 0, wait: 0.1)&.text(:all).start_with?(@locator)
+          field[:id].present? && label_for(field[:id], @locator)
         end
+      end
+
+      def label_for(field_id, label_text)
+        labels = @session.all("label[for='#{field_id}']", visible: :all, minimum: 0, wait: 0.1)
+        labels.any? { |label| label.text(:all)&.start_with?(label_text) }
       end
 
       def find_by_wrapping_label
