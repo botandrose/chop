@@ -64,6 +64,48 @@ Overide Capybara finders:
 High-level declarative transformations:
 * `#image`: Replaces the specified cell with the filename of the first image within it, stripped of path and cachebusters.
 
+Regex templates (opt‑in):
+* `#regex(*fields)`: Enables embedded regex templates inside expected cells for flexible matching. By default applies to all fields; optionally whitelist columns by header name (symbol/string) or by 1‑based column index.
+
+  - Syntax: write literal text with embedded regex tokens using Ruby‑style interpolation markers: `#{/pattern/flags}`. Flags support `i`, `m`, `x`.
+  - Matching: builds a single anchored regex for the entire cell by escaping literal segments and splicing regex tokens. The whole cell must match.
+  - Multiple tokens: allowed; flags across tokens are OR’ed together.
+  - Escaping: write `\#{/…/}` to render a token literally (no matching). The backslash is removed before comparing.
+
+  Examples:
+
+  ```ruby
+  # All fields enabled (table header present)
+  expected = [
+    ["Attachments"],
+    ['attachment.jpg 23.4 KB browser-report.txt #{/1\.\d{2} KB/}']
+  ]
+  expected.diff!("table") { regex }
+
+  # Whitelist by header name (normalized like header keys used elsewhere)
+  expected = [
+    ["A", "B"],
+    ["foo 123", 'bar #{/\d{3}/}']
+  ]
+  expected.diff!("table") { regex :b }
+
+  # Whitelist by 1-based column index
+  expected = [
+    ["A", "B"],
+    ["foo 123", 'bar #{/\d{3}/}']
+  ]
+  expected.diff!("table") { regex 2 }
+
+  # Non-whitelisted columns treat tokens as literal
+  expected = [
+    ["A", "B"],
+    ['#{/\w+ \d{3}/}', "bar 456"]
+  ]
+  expect {
+    expected.diff!("table") { regex :b }
+  }.to raise_error(Cucumber::MultilineArgument::DataTable::Different)
+  ```
+
 All these methods are implemented in terms of the following low-level methods, useful for when you need more control over the transformation:
 * `#header`: add or transform the table header, depending on block arity.
 * `#header(key)`: transform the specified header column, specified either by numeric index, or by hash key.
@@ -169,4 +211,3 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/botand
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
-
