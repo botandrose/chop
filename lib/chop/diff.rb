@@ -2,6 +2,7 @@ require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/object/blank"
 require "active_support/core_ext/class/attribute"
 require "active_support/hash_with_indifferent_access"
+require "chop/regex_templates"
 
 module Chop
   class Diff < Struct.new(:selector, :table, :session, :timeout, :block)
@@ -153,7 +154,7 @@ module Chop
       # FIXME should just delegate to Cucumber's #diff!. Cucumber needs to handle empty tables better.
       if !cucumber_table.raw.flatten.empty? && !actual.flatten.empty?
         if regex_templates_enabled
-          cucumber_table = apply_regex_templates(cucumber_table, actual)
+          cucumber_table = Chop::RegexTemplates.apply(cucumber_table, actual, regex_fields)
         end
         cucumber_table.diff! actual, **kwargs
       elsif cucumber_table.raw.flatten != actual.flatten
@@ -190,106 +191,6 @@ module Chop
       else
         Capybara::Node::Simple.new(value.to_s)
       end
-    end
-
-    TOKEN = /
-      (?<!\\)            # not preceded by backslash
-      \#\{               # start of token
-      \/                 # opening slash
-      (.*?)              # pattern (non-greedy)
-      \/                 # closing slash
-      ([imx]*)           # optional flags
-      \}                 # end of token
-    /mx
-
-    def apply_regex_templates(cucumber_table, actual)
-      allowed_columns = resolve_regex_allowed_columns(actual)
-
-      expected = cucumber_table.raw.map.with_index do |row, i|
-        row.map.with_index do |cell, j|
-          str = cell.to_s
-          # Always de-escape literal token markers so \#{/.../} becomes literal text
-          deescaped = str.gsub('\\#{', '#{')
-
-          if apply_regex_for_column?(allowed_columns, j) && deescaped.match?(TOKEN)
-            built = build_template_regex(deescaped)
-            actual_cell = (actual.dig(i, j) || "").to_s
-            if built[:regex].match?(actual_cell)
-              actual_cell
-            else
-              deescaped
-            end
-          else
-            deescaped
-          end
-        end
-      end
-
-      Cucumber::MultilineArgument::DataTable.from(expected)
-    end
-
-    def resolve_regex_allowed_columns(actual)
-      return :all if regex_fields.nil? || regex_fields.empty?
-
-      idxs = []
-
-      # Integer fields are 1-based indices
-      regex_fields.each do |f|
-        if f.is_a?(Integer)
-          idxs << (f - 1)
-        end
-      end
-
-      # Symbol/String fields are header names (use first row of actual)
-      names = regex_fields.select { |f| f.is_a?(Symbol) || f.is_a?(String) }.map(&:to_s)
-      if names.any? && actual.first
-        header = actual.first
-        header_keys = header.map.with_index do |cell, index|
-          text = cell.to_s
-          key = text.parameterize.underscore
-          key = text if key.blank? && text.present?
-          key = (index + 1).to_s if key.blank?
-          key
-        end
-        normalized_names = names.map { |n| n.to_s.parameterize.underscore }
-        header_keys.each_with_index do |key, idx|
-          idxs << idx if normalized_names.include?(key)
-        end
-      end
-
-      idxs.uniq
-    end
-
-    def apply_regex_for_column?(allowed_columns, j)
-      return true if allowed_columns == :all
-      allowed_columns.include?(j)
-    end
-
-    def build_template_regex(str)
-      parts = []
-      last = 0
-      flags = "".dup
-
-      str.to_enum(:scan, TOKEN).each do
-        m = Regexp.last_match
-        literal = str[last...m.begin(0)]
-        parts << Regexp.escape(literal)
-        pattern, f = m.captures
-        flags << f
-        parts << "(?:#{pattern})"
-        last = m.end(0)
-      end
-
-      tail = str[last..-1] || ""
-      parts << Regexp.escape(tail)
-
-      options = 0
-      options |= Regexp::IGNORECASE if flags.include?("i")
-      options |= Regexp::MULTILINE  if flags.include?("m")
-      options |= Regexp::EXTENDED   if flags.include?("x")
-
-      regex = Regexp.new("\\A(?:#{parts.join})\\z", options)
-      { regex: regex }
     end
   end
 end
