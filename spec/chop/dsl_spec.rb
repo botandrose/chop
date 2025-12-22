@@ -1,4 +1,5 @@
 require 'cucumber'
+require 'capybara'
 require 'chop'
 require 'chop/dsl'
 
@@ -20,7 +21,9 @@ describe Chop::DSL do
 
   describe ".diff!" do
     it "delegates to a class determined by selected element" do
-      selector, table, session, block = double, double, double, Proc.new {}
+      selector, table, block = double, double, Proc.new {}
+      driver = double(invalid_element_errors: [])
+      session = double(driver: driver, find: double(tag_name: "table"), config: double(default_retry_interval: 0.05))
       table_class = stub_const "Chop::Table", double
       expect(session).to receive(:find).with(selector).and_return(double(tag_name: "table"))
       expect(table_class).to receive(:diff!).with(selector, table, session: session, &block)

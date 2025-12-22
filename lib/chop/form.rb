@@ -7,26 +7,29 @@ module Chop
       new(table, session, path).fill_in!
     end
 
-    def self.diff! selector, table, session: Capybara.current_session, &block
-      root = begin
-        if selector.is_a?(Capybara::Node::Element)
-          selector
-        else
-          session.find(selector)
+    def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, &block
+      errors = session.driver.invalid_element_errors + [Cucumber::MultilineArgument::DataTable::Different]
+      Diff.synchronize_with_retry(session, timeout, errors) do
+        root = begin
+          if selector.is_a?(Capybara::Node::Element)
+            selector
+          else
+            session.find(selector)
+          end
+        rescue Capybara::ElementNotFound
+          raise unless @allow_not_found
+          Node("")
         end
-      rescue Capybara::ElementNotFound
-        raise unless @allow_not_found
-        Node("")
+
+        actual = root.all(Field.combined_css_selector)
+          .filter_map { |field_element| Field.from(session, field_element) }
+          .select(&:should_include_in_diff?)
+          .uniq { |field| field.field[:name] }
+          .filter_map(&:to_diff_row)
+
+        block.call(actual, root) if block_given?
+        table.diff! actual, surplus_row: false, misplaced_col: false
       end
-
-      actual = root.all(Field.combined_css_selector)
-        .filter_map { |field_element| Field.from(session, field_element) }
-        .select(&:should_include_in_diff?)
-        .uniq { |field| field.field[:name] }
-        .filter_map(&:to_diff_row)
-
-      block.call(actual, root) if block_given?
-      table.diff! actual, surplus_row: false, misplaced_col: false
     end
 
 
