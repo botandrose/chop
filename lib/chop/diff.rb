@@ -9,8 +9,20 @@ module Chop
     def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, errors: [], **kwargs, &block
       errors += session.driver.invalid_element_errors
       errors += [Cucumber::MultilineArgument::DataTable::Different]
-      session.document.synchronize timeout, errors: errors do
-        new(selector, table, session, timeout, block).diff! **kwargs
+      synchronize_with_retry(session, timeout, errors) do
+        new(selector, table, session, timeout, block).diff!(**kwargs)
+      end
+    end
+
+    def self.synchronize_with_retry(session, timeout, errors)
+      interval = session.config.default_retry_interval
+      timer = Capybara::Helpers.timer(expire_in: timeout)
+      begin
+        yield
+      rescue *errors => e
+        raise e if timer.expired?
+        sleep interval
+        retry
       end
     end
 
