@@ -9,26 +9,17 @@ module Chop
     end
 
     def diff! selector, table, session: Capybara.current_session, as: nil, timeout: nil, **kwargs, &block
-      kwargs[:session] = session
-      kwargs[:timeout] = timeout if timeout
-
-      if as
-        class_name = as.to_s.camelize
-        klass = const_get("Chop::#{class_name}")
-        klass.diff! selector, table, **kwargs, &block
+      class_name = if as
+        as.to_s
       elsif selector.respond_to?(:tag_name)
-        class_name = selector.tag_name.camelize
-        klass = const_get("Chop::#{class_name}")
-        klass.diff! selector, table, **kwargs, &block
+        selector.tag_name
       else
-        effective_timeout = timeout || Capybara.default_max_wait_time
-        errors = session.driver.invalid_element_errors + [Cucumber::MultilineArgument::DataTable::Different]
-        Diff.synchronize_with_retry(session, effective_timeout, errors) do
-          class_name = session.find(selector).tag_name.camelize
-          klass = const_get("Chop::#{class_name}")
-          klass.diff! selector, table, **kwargs, &block
-        end
-      end
+        session.find(selector).tag_name
+      end.camelize
+      klass = const_get("Chop::#{class_name}")
+      kwargs[:session] = session
+      kwargs[:timeout] = timeout if timeout.present?
+      klass.diff! selector, table, **kwargs, &block
     end
 
     def fill_in! table
@@ -56,4 +47,3 @@ module Chop
     }
   end
 end
-

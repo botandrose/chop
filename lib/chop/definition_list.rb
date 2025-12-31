@@ -1,10 +1,10 @@
 require "chop/diff"
-      
+
 module Chop
   class DefinitionList < Diff
     self.default_selector = "dl"
     self.rows_finder = ->(root) do
-      root.all("dt,dd").slice_before do |node|
+      root.all("dt,dd", allow_reload: true).slice_before do |node|
         node.tag_name == "dt"
       end
     end

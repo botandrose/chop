@@ -2,7 +2,6 @@ require "spec_helper"
 require "chop/table"
 require "cucumber"
 require "capybara"
-require "capybara/cuprite"
 require "puma"
 require "slim"
 
@@ -641,91 +640,6 @@ describe Chop::Table do
           image :a
         end
       end
-    end
-  end
-
-  describe "retry on stale element errors", :cuprite do
-    let(:body) do
-      slim """
-        table
-          thead
-            tr: th A
-          tbody
-            tr: td 1
-      """
-    end
-
-    let(:table) { [["A"], ["1"]] }
-
-    before do
-      Capybara.register_driver :cuprite do |app|
-        Capybara::Cuprite::Driver.new(app, browser_options: { "no-sandbox" => nil })
-      end
-      Capybara.current_driver = :cuprite
-      Capybara.current_session.visit("/")
-    end
-
-    after do
-      Capybara.use_default_driver
-    end
-
-    it "retries when ObsoleteNode is raised" do
-      retry_count = 0
-      original_text = Capybara::Node::Element.instance_method(:text)
-
-      Capybara::Node::Element.define_method(:text) do
-        retry_count += 1
-        if retry_count <= 2
-          raise Capybara::Cuprite::ObsoleteNode.new(self, "simulated obsolete node")
-        end
-        original_text.bind(self).call
-      end
-
-      expect {
-        described_class.diff!("table", table_from(table))
-      }.not_to raise_error
-
-      expect(retry_count).to be > 2
-
-      Capybara::Node::Element.define_method(:text) { original_text.bind(self).call }
-    end
-
-    it "retries when called from within another synchronize block" do
-      retry_count = 0
-      original_text = Capybara::Node::Element.instance_method(:text)
-
-      Capybara::Node::Element.define_method(:text) do
-        retry_count += 1
-        if retry_count <= 2
-          raise Capybara::Cuprite::ObsoleteNode.new(self, "simulated obsolete node")
-        end
-        original_text.bind(self).call
-      end
-
-      expect {
-        Capybara.current_session.document.synchronize do
-          retry_count = 0
-          described_class.diff!("table", table_from(table))
-        end
-      }.not_to raise_error
-
-      expect(retry_count).to be > 2
-
-      Capybara::Node::Element.define_method(:text) { original_text.bind(self).call }
-    end
-
-    it "raises after timeout expires" do
-      original_text = Capybara::Node::Element.instance_method(:text)
-
-      Capybara::Node::Element.define_method(:text) do
-        raise Capybara::Cuprite::ObsoleteNode.new(self, "simulated obsolete node")
-      end
-
-      expect {
-        described_class.diff!("table", table_from(table), timeout: 0.1)
-      }.to raise_error(Capybara::Cuprite::ObsoleteNode)
-
-      Capybara::Node::Element.define_method(:text) { original_text.bind(self).call }
     end
   end
 

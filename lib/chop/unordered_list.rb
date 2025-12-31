@@ -1,9 +1,9 @@
 require "chop/definition_list"
-      
+
 module Chop
   class UnorderedList < DefinitionList
     self.default_selector = "ul"
-    self.rows_finder = ->(root) { root.all("li") }
+    self.rows_finder = ->(root) { root.all("li", allow_reload: true) }
     self.cells_finder = ->(row) { [row] }
 
     def nested
@@ -11,14 +11,14 @@ module Chop
         recurse_tree [], root
       }
       self.text_finder = ->(cell) {
-        cell.chop_prefix + cell.all(:xpath, "*[not(self::ul)]").map(&:text).join(" ").strip
+        cell.chop_prefix + cell.all(:xpath, "*[not(self::ul)]", allow_reload: true).map(&:text).join(" ").strip
       }
     end
 
     private
 
     def recurse_tree structure, root, prefix: "- "
-      root.all(:xpath, "./li").each do |li|
+      root.all(:xpath, "./li", allow_reload: true).each do |li|
         li.define_singleton_method(:chop_prefix) { prefix }
         structure << li
 

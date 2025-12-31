@@ -9,25 +9,13 @@ module Chop
     def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, errors: [], **kwargs, &block
       errors += session.driver.invalid_element_errors
       errors += [Cucumber::MultilineArgument::DataTable::Different]
-      synchronize_with_retry(session, timeout, errors) do
-        new(selector, table, session, timeout, block).diff!(**kwargs)
-      end
-    end
-
-    def self.synchronize_with_retry(session, timeout, errors)
-      interval = session.config.default_retry_interval
-      timer = Capybara::Helpers.timer(expire_in: timeout)
-      begin
-        yield
-      rescue *errors => e
-        raise e if timer.expired?
-        sleep interval
-        retry
+      session.document.synchronize timeout, errors: errors do
+        new(selector, table, session, timeout, block).diff! **kwargs
       end
     end
 
     def cell_to_image_filename cell
-      cell.all("img").map do |img|
+      cell.all("img", allow_reload: true).map do |img|
         File.basename(img[:src] || "").split("?")[0].sub(/-[0-9a-f]{64}/, '')
       end.first
     end

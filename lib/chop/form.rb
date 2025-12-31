@@ -7,29 +7,26 @@ module Chop
       new(table, session, path).fill_in!
     end
 
-    def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, &block
-      errors = session.driver.invalid_element_errors + [Cucumber::MultilineArgument::DataTable::Different]
-      Diff.synchronize_with_retry(session, timeout, errors) do
-        root = begin
-          if selector.is_a?(Capybara::Node::Element)
-            selector
-          else
-            session.find(selector)
-          end
-        rescue Capybara::ElementNotFound
-          raise unless @allow_not_found
-          Node("")
+    def self.diff! selector, table, session: Capybara.current_session, &block
+      root = begin
+        if selector.is_a?(Capybara::Node::Element)
+          selector
+        else
+          session.find(selector)
         end
-
-        actual = root.all(Field.combined_css_selector)
-          .filter_map { |field_element| Field.from(session, field_element) }
-          .select(&:should_include_in_diff?)
-          .uniq { |field| field.field[:name] }
-          .filter_map(&:to_diff_row)
-
-        block.call(actual, root) if block_given?
-        table.diff! actual, surplus_row: false, misplaced_col: false
+      rescue Capybara::ElementNotFound
+        raise unless @allow_not_found
+        Node("")
       end
+
+      actual = root.all(Field.combined_css_selector, allow_reload: true)
+        .filter_map { |field_element| Field.from(session, field_element) }
+        .select(&:should_include_in_diff?)
+        .uniq { |field| field.field[:name] }
+        .filter_map(&:to_diff_row)
+
+      block.call(actual, root) if block_given?
+      table.diff! actual, surplus_row: false, misplaced_col: false
     end
 
 
@@ -165,7 +162,7 @@ module Chop
       end
 
       def fill_in!
-        field.all("option").map(&:text).each do |value|
+        field.all("option", allow_reload: true).map(&:text).each do |value|
           session.unselect value, from: label
         end
         value.split(", ").each do |value|
@@ -220,12 +217,12 @@ module Chop
       private
 
       def checkboxes
-        session.all("[name='#{field[:name]}']")
+        session.all("[name='#{field[:name]}']", allow_reload: true)
       end
 
       def checkbox_label_in_values? checkbox
         values = value.split(", ")
-        labels = session.all("label[for='#{checkbox[:id]}']").map(&:text)
+        labels = session.all("label[for='#{checkbox[:id]}']", allow_reload: true).map(&:text)
         (values & labels).any?
       end
     end
@@ -262,7 +259,7 @@ module Chop
       end
 
       def get_value
-        session.all("[name='#{field[:name]}']").find(&:checked?).try(:value)
+        session.all("[name='#{field[:name]}']", allow_reload: true).find(&:checked?).try(:value)
       end
 
       private
@@ -272,7 +269,7 @@ module Chop
       end
 
       def value_field
-        session.all(:field, value).select { |el| el[:name] == field[:name] }.last || {}
+        session.all(:field, value, allow_reload: true).select { |el| el[:name] == field[:name] }.last || {}
       end
     end
 
