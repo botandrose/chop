@@ -1,3 +1,3 @@
 module Chop
-  VERSION = "0.36.5"
+  VERSION = "0.36.2"
 end

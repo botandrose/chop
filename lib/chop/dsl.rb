@@ -9,19 +9,16 @@ module Chop
     end
 
     def diff! selector, table, session: Capybara.current_session, as: nil, timeout: nil, **kwargs, &block
-      sync_timeout = timeout || Capybara.default_max_wait_time
       class_name = if as
         as.to_s
       elsif selector.respond_to?(:tag_name)
         selector.tag_name
       else
-        session.document.synchronize sync_timeout, errors: session.driver.invalid_element_errors do
-          session.find(selector).tag_name
-        end
+        session.find(selector).tag_name
       end.camelize
       klass = const_get("Chop::#{class_name}")
       kwargs[:session] = session
-      kwargs[:timeout] = timeout if timeout
+      kwargs[:timeout] = timeout if timeout.present?
       klass.diff! selector, table, **kwargs, &block
     end
 
