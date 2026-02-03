@@ -54,13 +54,15 @@ module Chop
         return nil if locator.nil?
 
         @locator = locator.to_s
-        @all_fields = @session.all(@css_selector)
+        @session.document.synchronize(Capybara.default_max_wait_time, errors: [Capybara::ElementNotFound]) do
+          @all_fields = @session.all(@css_selector, minimum: 1, wait: 0)
 
-        find_by_direct_attributes ||
-        find_by_aria_label ||
-        find_by_associated_label ||
-        find_by_wrapping_label ||
-        raise_not_found
+          find_by_direct_attributes ||
+          find_by_aria_label ||
+          find_by_associated_label ||
+          find_by_wrapping_label ||
+          raise_not_found
+        end
       end
 
       private
