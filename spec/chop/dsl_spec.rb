@@ -22,6 +22,10 @@ describe Chop::DSL do
     it "delegates to a class determined by selected element" do
       selector, table, session, block = double, double, double, Proc.new {}
       table_class = stub_const "Chop::Table", double
+      document = double
+      allow(session).to receive(:driver).and_return(double(invalid_element_errors: []))
+      allow(session).to receive(:document).and_return(document)
+      allow(document).to receive(:synchronize).and_yield
       expect(session).to receive(:find).with(selector).and_return(double(tag_name: "table"))
       expect(table_class).to receive(:diff!).with(selector, table, session: session, &block)
       subject.diff! selector, table, session: session, &block
