@@ -8,7 +8,7 @@ module Chop
   class Diff < Struct.new(:selector, :table, :session, :timeout, :block)
     def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, errors: [], **kwargs, &block
       errors += session.driver.invalid_element_errors
-      errors += [Cucumber::MultilineArgument::DataTable::Different]
+      errors += [Capybara::ElementNotFound, Cucumber::MultilineArgument::DataTable::Different]
       session.document.synchronize timeout, errors: errors do
         new(selector, table, session, timeout, block).diff! **kwargs
       end
