@@ -163,7 +163,7 @@ end
 
 Given "the following stories exist:" do |table|
   table.create! factory_girl: "conversation_table/story" do
-    belongs_to :industry, ConversationTable::Industry
+    belongs_to :industry # class is inferred from association reflection
 
     rename :image => :image_file
     file :image_file

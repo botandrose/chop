@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "cucumber"
   spec.add_dependency "capybara"
 
+  spec.add_development_dependency "sqlite3", "~> 1.4"
   spec.add_development_dependency "appraisal"
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec"

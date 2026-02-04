@@ -348,6 +348,35 @@ describe Chop::Create do
         end
         expect(records).to eq [{"user" => micah}]
       end
+
+      it "uses association reflection to infer namespaced class" do
+        require "active_record"
+        ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
+        ActiveRecord::Schema.define do
+          suppress_messages do
+            create_table :curriculum_courses, force: true do |t|
+              t.string :name
+            end
+            create_table :curriculum_credits, force: true do |t|
+              t.references :course
+            end
+          end
+        end
+
+        stub_const("Curriculum", Module.new)
+        stub_const("Curriculum::Course", Class.new(ActiveRecord::Base) { self.table_name = "curriculum_courses" })
+        stub_const("Curriculum::Credit", Class.new(ActiveRecord::Base) {
+          self.table_name = "curriculum_credits"
+          belongs_to :course, class_name: "Curriculum::Course"
+        })
+
+        math = Curriculum::Course.create!(name: "Math 101")
+        table = double(hashes: [{"course" => "Math 101"}])
+        records = described_class.create! Curriculum::Credit, table do
+          belongs_to :course
+        end
+        expect(records.first.course).to eq math
+      end
     end
 
     describe "#has_many" do
@@ -384,6 +413,38 @@ describe Chop::Create do
           has_many :users
         end
         expect(records).to eq [{"users" => [micah, michael]}]
+      end
+
+      it "uses association reflection to infer namespaced class" do
+        require "active_record"
+        ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
+        ActiveRecord::Schema.define do
+          suppress_messages do
+            create_table :inventory_tags, force: true do |t|
+              t.string :name
+              t.integer :product_id
+            end
+            create_table :inventory_products, force: true
+          end
+        end
+
+        stub_const("Inventory", Module.new) unless defined?(Inventory)
+        stub_const("Inventory::Tag", Class.new(ActiveRecord::Base) { self.table_name = "inventory_tags" })
+        stub_const("Inventory::Product", Class.new(ActiveRecord::Base) {
+          self.table_name = "inventory_products"
+          has_many :tags, class_name: "Inventory::Tag", foreign_key: :product_id
+        })
+
+        alpha = Inventory::Tag.create!(name: "Alpha")
+        beta = Inventory::Tag.create!(name: "Beta")
+        table = double(hashes: [{"tags" => "Alpha, Beta"}])
+        records = described_class.create! Inventory::Product, table do
+          has_many :tags
+          after :tags do |product, attrs|
+            product.tags = attrs[:tags]
+          end
+        end
+        expect(records.first.tags).to eq [alpha, beta]
       end
     end
 

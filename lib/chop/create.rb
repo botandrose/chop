@@ -159,7 +159,7 @@ module Chop
 
     def has_many key, klass=nil, delimiter: ", ", field: :name, find_by: nil
       field = find_by if find_by
-      klass ||= key.to_s.classify.constantize
+      klass ||= class_from_association(key)
       self.field key do |names|
         names.split(delimiter).map do |name|
           klass.find_by!(field => name)
@@ -169,7 +169,7 @@ module Chop
 
     def has_one key, klass=nil, field: :name, find_by: nil
       field = find_by if find_by
-      klass ||= key.to_s.classify.constantize
+      klass ||= class_from_association(key)
       self.field key do |name|
         klass.find_by!(field => name) if name.present?
       end
@@ -205,6 +205,12 @@ module Chop
         rename keys.first
         keys.replace keys.first.values
       end
+    end
+
+    def class_from_association(key)
+      if self[:klass].respond_to?(:reflect_on_association)
+        self[:klass].reflect_on_association(key)&.klass
+      end || key.to_s.classify.constantize
     end
   end
 end
