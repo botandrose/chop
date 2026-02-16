@@ -2,15 +2,18 @@ require "active_support/core_ext/string/inflections"
 require "active_support/core_ext/object/blank"
 require "active_support/core_ext/class/attribute"
 require "active_support/hash_with_indifferent_access"
+require "chop/config"
 require "chop/regex_templates"
 
 module Chop
   class Diff < Struct.new(:selector, :table, :session, :timeout, :block)
-    def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, errors: [], **kwargs, &block
+    def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, atomic: Chop.atomic_diff, errors: [], **kwargs, &block
       errors += session.driver.invalid_element_errors
       errors += [Cucumber::MultilineArgument::DataTable::Different]
       session.document.synchronize timeout, errors: errors do
-        new(selector, table, session, timeout, block).diff! **kwargs
+        instance = new(selector, table, session, timeout, block)
+        instance.instance_variable_set(:@atomic, atomic)
+        instance.diff! **kwargs
       end
     end
 
@@ -145,7 +148,10 @@ module Chop
       end
 
       rows.map do |row|
-        row.map { |cell| text_finder.call(cell) }
+        row.map do |cell|
+          text = text_finder.call(cell)
+          @atomic && text.is_a?(String) ? normalize_atomic_text(text) : text
+        end
       end
     end
 
@@ -172,12 +178,30 @@ module Chop
       end
     end
 
+    # Normalize text from a Nokogiri snapshot to match what Capybara drivers
+    # return from visible_text. Replicates Capybara::Node::WhitespaceNormalizer#normalize_spacing.
+    def normalize_atomic_text(text)
+      text
+        .delete("\u200b\u200e\u200f")
+        .tr(" \n\f\t\v\u2028\u2029", " ")
+        .squeeze(" ")
+        .sub(/\A[[:space:]&&[^\u00a0]]+/, "")
+        .sub(/[[:space:]&&[^\u00a0]]+\z/, "")
+        .tr("\u00a0", " ")
+    end
+
     def root
       @root ||= begin
-        if selector.is_a?(Capybara::Node::Element)
+        element = if selector.is_a?(Capybara::Node::Element)
           selector
         else
           session.find(selector, wait: timeout)
+        end
+        if @atomic
+          html = element["outerHTML"] || element.native.to_html
+          Node(html)
+        else
+          element
         end
       rescue Capybara::ElementNotFound
         raise unless @allow_not_found

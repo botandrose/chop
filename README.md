@@ -26,6 +26,7 @@ All these methods accept blocks for customization.
 ### Configuration methods for `Chop`:
 
 * `.register_creation_strategy`: Provide a key and a block to register alternate strategies for `.create!`, e.g. FactoryGirl.
+* `.atomic_diff=`: When set to `true`, `#diff!` captures the root element's HTML in a single read and parses it locally with Nokogiri, avoiding multiple CDP round-trips that can cause stale element errors during DOM morphs (e.g. Turbo). Off by default. Can be overridden per-call with the `atomic:` keyword argument.
 
 ### Block methods for `#create!`:
 
@@ -55,7 +56,10 @@ Lifecycle hooks:
 
 Transform the table of Capybara nodes before converting them to text and passing to `diff!`.
 
-Overide Capybara finders:
+Options (keyword arguments):
+* `atomic: true/false`: Override the global `Chop.atomic_diff` setting for this call. Example: `table.diff! "table", atomic: true`
+
+Override Capybara finders:
 * `#rows`: overrides existing default row finder.
 * `#cells`: overrides existing default cell finder.
 * `#text`: overrides existing default text finder.
