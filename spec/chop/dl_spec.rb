@@ -1,11 +1,7 @@
 require "spec_helper"
 require "chop/definition_list"
 require "cucumber"
-require "capybara"
-require "puma"
 require "slim"
-
-Capybara.server = :puma, { Silent: true }
 
 describe Chop::DefinitionList do
   let(:app) do
@@ -13,9 +9,7 @@ describe Chop::DefinitionList do
   end
 
   before do
-    Capybara.reset_sessions!
     Capybara.app = app
-    Capybara.use_default_driver
     Capybara.current_session.visit("/")
   end
 

@@ -1,8 +1,6 @@
 require "spec_helper"
 require "chop"
 require "cucumber"
-require "capybara"
-require "puma"
 require "slim"
 
 describe "Chop.empty_table" do
@@ -18,7 +16,6 @@ describe "Chop.empty_table" do
 
     before do
       Capybara.app = app
-      Capybara.server = :puma, { Silent: true }
       Capybara.current_session.visit("/")
     end
 

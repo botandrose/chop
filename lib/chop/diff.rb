@@ -128,6 +128,8 @@ module Chop
     end
 
     def to_a
+      wait_for_idle! if @atomic
+      freeze_page_scripts! if @atomic
       rows = rows_finder.call(root).map { |row| cells_finder.call(row).to_a }
       rows = normalize(rows)
 
@@ -149,10 +151,11 @@ module Chop
 
       rows.map do |row|
         row.map do |cell|
-          text = text_finder.call(cell)
-          @atomic && text.is_a?(String) ? normalize_atomic_text(text) : text
+          text_finder.call(cell)
         end
       end
+    ensure
+      unfreeze_page_scripts! if @atomic
     end
 
     def diff! cucumber_table = table, **kwargs
@@ -178,35 +181,49 @@ module Chop
       end
     end
 
-    # Normalize text from a Nokogiri snapshot to match what Capybara drivers
-    # return from visible_text. Replicates Capybara::Node::WhitespaceNormalizer#normalize_spacing.
-    def normalize_atomic_text(text)
-      text
-        .delete("\u200b\u200e\u200f")
-        .tr(" \n\f\t\v\u2028\u2029", " ")
-        .squeeze(" ")
-        .sub(/\A[[:space:]&&[^\u00a0]]+/, "")
-        .sub(/[[:space:]&&[^\u00a0]]+\z/, "")
-        .tr("\u00a0", " ")
-    end
 
     def root
       @root ||= begin
-        element = if selector.is_a?(Capybara::Node::Element)
+        if selector.is_a?(Capybara::Node::Element)
           selector
         else
           session.find(selector, wait: timeout)
-        end
-        if @atomic
-          html = element["outerHTML"] || element.native.to_html
-          Node(html)
-        else
-          element
         end
       rescue Capybara::ElementNotFound
         raise unless @allow_not_found
         Node("")
       end
+    end
+
+    def cdp_page
+      session.driver.browser.page
+    rescue NoMethodError
+      nil
+    end
+
+    def wait_for_idle!
+      return unless cdp_page
+
+      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      loop do
+        break if Process.clock_gettime(Process::CLOCK_MONOTONIC) - start > timeout
+        pending_frames = session.evaluate_script("document.querySelectorAll('turbo-frame[src]:not([complete]), turbo-frame[busy]').length")
+        pending_network = session.driver.browser.network.pending_connections
+        break if pending_frames == 0 && pending_network == 0
+        sleep 0.05
+      end
+    end
+
+    def freeze_page_scripts!
+      page = cdp_page
+      return unless page
+      page.command("Emulation.setScriptExecutionDisabled", value: true)
+    end
+
+    def unfreeze_page_scripts!
+      page = cdp_page
+      return unless page
+      page.command("Emulation.setScriptExecutionDisabled", value: false)
     end
 
     def Node value

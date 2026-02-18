@@ -1,8 +1,6 @@
 require "spec_helper"
 require "chop/table"
 require "cucumber"
-require "capybara"
-require "puma"
 require "slim"
 
 describe "Chop regex templates" do
@@ -12,7 +10,6 @@ describe "Chop regex templates" do
 
   before do
     Capybara.app = app
-    Capybara.server = :puma, { Silent: true }
     Capybara.current_session.visit("/")
   end
 

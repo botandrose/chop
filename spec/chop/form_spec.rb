@@ -1,15 +1,7 @@
 require "spec_helper"
 require "chop/form"
 require "cucumber"
-require "capybara"
-require "capybara/cuprite"
-require "puma"
 require "slim"
-
-Capybara.server = :puma, { Silent: true }
-Capybara.register_driver :cuprite do |app|
-  Capybara::Cuprite::Driver.new(app, process_timeout: 20)
-end
 
 module FileFieldFiles
   refine Capybara::Node::Element do
@@ -27,7 +19,6 @@ describe Chop::Form do
     end
 
     before do
-      Capybara.reset_sessions!
       Capybara.app = app
       Capybara.current_session.visit("/")
     end
