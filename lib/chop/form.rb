@@ -46,13 +46,16 @@ module Chop
         return nil if locator.nil?
 
         @locator = locator.to_s
-        @all_fields = @session.all(@css_selector)
 
-        find_by_direct_attributes ||
-        find_by_aria_label ||
-        find_by_associated_label ||
-        find_by_wrapping_label ||
-        raise_not_found
+        @session.document.synchronize do
+          @all_fields = @session.all(@css_selector, wait: false)
+
+          find_by_direct_attributes ||
+          find_by_aria_label ||
+          find_by_associated_label ||
+          find_by_wrapping_label ||
+          raise_not_found
+        end
       end
 
       private
