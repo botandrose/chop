@@ -14,8 +14,10 @@ module Chop
       elsif selector.respond_to?(:tag_name)
         selector.tag_name
       else
-        session.document.synchronize(timeout || Capybara.default_max_wait_time, errors: session.driver.invalid_element_errors) do
+        begin
           session.find(selector).tag_name
+        rescue *session.driver.invalid_element_errors
+          retry
         end
       end.camelize
       klass = const_get("Chop::#{class_name}")

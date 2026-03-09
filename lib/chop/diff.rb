@@ -10,10 +10,15 @@ module Chop
     def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, atomic: Chop.atomic_diff, errors: [], **kwargs, &block
       errors += session.driver.invalid_element_errors
       errors += [Cucumber::MultilineArgument::DataTable::Different]
-      session.document.synchronize timeout, errors: errors do
+      timer = Capybara::Helpers.timer(expire_in: timeout)
+      begin
         instance = new(selector, table, session, timeout, block)
         instance.instance_variable_set(:@atomic, atomic)
         instance.diff! **kwargs
+      rescue *errors => e
+        raise e if timer.expired?
+        sleep session.config.default_retry_interval
+        retry
       end
     end
 
