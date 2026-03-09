@@ -14,7 +14,9 @@ module Chop
       elsif selector.respond_to?(:tag_name)
         selector.tag_name
       else
-        session.find(selector).tag_name
+        session.document.synchronize(timeout || Capybara.default_max_wait_time, errors: session.driver.invalid_element_errors) do
+          session.find(selector).tag_name
+        end
       end.camelize
       klass = const_get("Chop::#{class_name}")
       kwargs[:session] = session
