@@ -85,11 +85,11 @@ module Chop
 
       def find_by_wrapping_label
         wrapping_label = @session.all("label", text: @locator, visible: :all, minimum: 0, wait: 0.1).find do |label|
-          label.find(@css_selector, visible: :all, minimum: 0, wait: 0.1)
+          label.find(@css_selector, visible: :all, wait: 0.1)
         rescue Capybara::ElementNotFound
           false
         end
-        wrapping_label&.find(@css_selector, visible: :all, minimum: 0, wait: 0.1)
+        wrapping_label&.find(@css_selector, visible: :all, wait: 0.1)
       end
 
       def raise_not_found
