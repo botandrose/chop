@@ -206,9 +206,9 @@ describe Chop::Table do
             described_class.diff! element, table_from(table)
           end
 
-          it "accepts timeout option and it down to capybara finder" do
+          it "accepts timeout option" do
             element = Capybara.current_session.find("table")
-            expect(Capybara.current_session).to receive(:find).with("table", wait: 30).and_return(element)
+            expect(Capybara.current_session).to receive(:find).with("table", wait: false).and_return(element)
             described_class.diff! "table", table_from(table), timeout: 30
           end
         end

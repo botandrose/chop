@@ -10,6 +10,7 @@ module Chop
     def self.diff! selector, table, session: Capybara.current_session, timeout: Capybara.default_max_wait_time, atomic: Chop.atomic_diff, errors: [], **kwargs, &block
       errors += session.driver.invalid_element_errors
       errors += [Cucumber::MultilineArgument::DataTable::Different]
+      errors += [Capybara::ElementNotFound]
       timer = Capybara::Helpers.timer(expire_in: timeout)
       begin
         instance = new(selector, table, session, timeout, block)
@@ -192,7 +193,7 @@ module Chop
         if selector.is_a?(Capybara::Node::Element)
           selector
         else
-          session.find(selector, wait: timeout)
+          session.find(selector, wait: false)
         end
       rescue Capybara::ElementNotFound
         raise unless @allow_not_found
