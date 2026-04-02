@@ -59,7 +59,7 @@ module Chop
         end
       else
         if block.arity.zero?
-          @new_header = yield
+          @new_header_block = block
         else
           header_transformation do |row|
             yield(row)
@@ -130,6 +130,7 @@ module Chop
     def to_a
       wait_for_idle! if @atomic
       freeze_page_scripts! if @atomic
+      @new_header = @new_header_block.call if @new_header_block
       rows = rows_finder.call(root).map { |row| cells_finder.call(row).to_a }
       rows = normalize(rows)
 
