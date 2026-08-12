@@ -69,6 +69,20 @@ Diffing works by:
 3. Comparing against the expected table using `diff!` from Cucumber
 4. Supporting element-specific extraction logic (e.g., images in table cells)
 
+Every `diff!`, including `Chop::Form`'s, wraps the read in `synchronize` and
+re-reads until it matches or the timeout expires. Capybara's `synchronize` is not
+re-entrant, so finders inside that block get a single attempt each and their
+errors have to be retriable at the outer level. A block that post-processes
+`actual` should raise `Capybara::ElementNotFound` to request a re-read.
+
+When `Chop.atomic_diff` is on, an atomic read first waits for the page to go idle
+(`Diff#wait_for_idle!`), then disables script execution for the duration of the
+read. Idle means no in-flight network and no frame Turbo is actually fetching —
+lazy and disabled frames carry a `src` that is never fetched, so counting them
+would mean the page is never idle. The check has to hold for
+`IDLE_SAMPLES_REQUIRED` consecutive samples, since the gap between a click and
+the request it triggers also looks idle.
+
 ## Testing Patterns
 
 - Uses RSpec with `spec_helper.rb` configuring focus filtering

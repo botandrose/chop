@@ -117,6 +117,31 @@ All these methods are implemented in terms of the following low-level methods, u
 * `#hash_transformation`: performs arbitrary transformations on an array of hashes constructed by assuming a header row. Hash keys are downcased and underscored.
 * `#transformation`: performs arbitrary transformations on the 2d array of Capybara nodes.
 
+### Diffing a `<form>`:
+
+Form diffs take a block that post-processes the rows before comparison:
+
+``` ruby
+table.diff! "#ticket_1", as: :form do |actual, root|
+  actual.insert 0, ["Owned by", root.all("owners-select option[selected]").map(&:text).join(" ")]
+end
+```
+
+Like every other `#diff!`, the read is retried until it matches or the timeout
+expires, so the block can be handed a form that is still rendering. Raise
+`Capybara::ElementNotFound` to ask for a re-read rather than working with what is
+there:
+
+``` ruby
+index = actual.index { |row| row.first == "Requested by" }
+raise Capybara::ElementNotFound, "no \"Requested by\" row yet" unless index
+```
+
+Reads inside the block should pass `minimum: 0` to Capybara's `#all`. Its default
+of `minimum: 1` waits out the whole timeout before conceding that a collection is
+legitimately empty, and the retry above already covers a collection that has not
+rendered yet.
+
 ### Block methods for `#fill_in!`:
 
 TODO: Does this make sense?
