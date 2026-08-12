@@ -202,16 +202,30 @@ module Chop
       nil
     end
 
+    # The page has to look quiet for a continuous window before we believe it,
+    # since the gap between a click and the fetch it triggers also looks quiet.
+    # Widen this on slow or oversubscribed machines, where "quiet" more often
+    # means "descheduled" than "finished".
+    IDLE_POLL_INTERVAL = 0.05
+    IDLE_SAMPLES_REQUIRED = 10
+
+    # A `src` on a lazy or disabled frame is never fetched, so counting those as
+    # pending means the page never goes idle and every atomic diff burns its
+    # whole timeout. `busy` covers a lazy frame that has just come into view.
+    PENDING_FRAMES_SELECTOR = 'turbo-frame[busy], turbo-frame[src]:not([complete]):not([disabled]):not([loading="lazy"])'
+
     def wait_for_idle!
       return unless cdp_page
 
       start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      idle_samples = 0
       loop do
         break if Process.clock_gettime(Process::CLOCK_MONOTONIC) - start > timeout
-        pending_frames = session.evaluate_script("document.querySelectorAll('turbo-frame[src]:not([complete]), turbo-frame[busy]').length")
+        pending_frames = session.evaluate_script("document.querySelectorAll(#{PENDING_FRAMES_SELECTOR.inspect}).length")
         pending_network = session.driver.browser.network.pending_connections
-        break if pending_frames == 0 && pending_network == 0
-        sleep 0.05
+        idle_samples = (pending_frames == 0 && pending_network == 0) ? idle_samples + 1 : 0
+        break if idle_samples >= IDLE_SAMPLES_REQUIRED
+        sleep IDLE_POLL_INTERVAL
       end
     end
 

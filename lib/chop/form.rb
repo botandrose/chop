@@ -7,7 +7,21 @@ module Chop
       new(table, session, path).fill_in!
     end
 
-    def self.diff! selector, table, session: Capybara.current_session, &block
+    # Capybara's #synchronize is not re-entrant, so the finds below get a single
+    # attempt each and have to retry out here instead — hence ElementNotFound in
+    # the error list. A block that post-processes `actual` should raise
+    # Capybara::ElementNotFound to ask for a re-read of a half-rendered form.
+    def self.diff! selector, table, session: Capybara.current_session, timeout: nil, &block
+      errors = session.driver.invalid_element_errors + [
+        Cucumber::MultilineArgument::DataTable::Different,
+        Capybara::ElementNotFound,
+      ]
+      session.document.synchronize timeout || Capybara.default_max_wait_time, errors: errors do
+        diff_once! selector, table, session: session, &block
+      end
+    end
+
+    def self.diff_once! selector, table, session:, &block
       root = begin
         if selector.is_a?(Capybara::Node::Element)
           selector
@@ -28,7 +42,7 @@ module Chop
       block.call(actual, root) if block_given?
       table.diff! actual, surplus_row: false, misplaced_col: false
     end
-
+    private_class_method :diff_once!
 
     def fill_in!
       table.rows_hash.each do |label, value|
