@@ -20,9 +20,9 @@ Note: RSpec is configured to run only tests marked with `focus: true`. When no f
 - `bin/console` - Interactive console for experimentation
 
 ### Multi-Version Testing
-Tests must pass against Rails 7.0, 7.1, and 7.2 on Ruby 3.1, 3.2, and 3.3:
+Tests must pass against Rails 8.1 on Ruby 3.3, 3.4, and 4.0:
 - `bundle exec appraisal install` - Install gems for all Rails versions
-- `bundle exec appraisal rails-7.0 rspec` - Test against specific Rails version
+- `bundle exec appraisal rails-8.1 rspec` - Test against specific Rails version
 - `bundle exec appraisal rspec` - Test against all Rails versions
 
 ### Gem Management
