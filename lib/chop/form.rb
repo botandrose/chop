@@ -62,7 +62,7 @@ module Chop
         @locator = locator.to_s
 
         @session.document.synchronize do
-          @all_fields = @session.all(@css_selector, wait: false)
+          @all_fields = candidate_fields
 
           find_by_direct_attributes ||
           find_by_aria_label ||
@@ -73,6 +73,33 @@ module Chop
       end
 
       private
+
+      def candidate_fields
+        narrowed = @session.driver.wait? ? narrowed_fields : []
+        narrowed.any? ? narrowed : @session.all(@css_selector, wait: false)
+      end
+
+      # Must stay a superset of what the find_by_* methods match: they decide, this only spares them a round trip per field.
+      def narrowed_fields
+        scope = @session.current_scope
+        root = scope if scope.is_a?(Capybara::Node::Element)
+
+        fields = @session.evaluate_script(<<~'JS', @css_selector, @locator, root)
+          ((css, locator, root) => {
+            const scope = root || document
+            const squash = (text) => String(text).replace(/[\s\u0085\u180e\u200b\u200e\u200f]/g, "")
+            const target = squash(locator)
+            const labels = [...scope.querySelectorAll("label")].filter((label) => squash(label.textContent).includes(target))
+            const labelledIds = new Set(labels.map((label) => label.getAttribute("for")))
+            return [...scope.querySelectorAll(css)].filter((field) =>
+              ["id", "name", "placeholder", "aria-label"].some((name) => field[name] === locator || field.getAttribute(name) === locator)
+              || labelledIds.has(field.id) || labelledIds.has(field.getAttribute("id"))
+              || labels.includes(field.closest("label")))
+          })(arguments[0], arguments[1], arguments[2])
+        JS
+
+        @session.config.ignore_hidden_elements ? fields.select(&:visible?) : fields
+      end
 
       def find_by_direct_attributes
         @all_fields.find do |field|

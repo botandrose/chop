@@ -110,6 +110,224 @@ describe Chop::Form do
   end
 
   describe ".fill_in!" do
+    describe "finding fields" do
+      it "finds fields by id, name, placeholder, and aria-label" do
+        session = test_app <<-SLIM
+          input id="by-id"
+          input name="by-name"
+          input placeholder="by-placeholder"
+          input aria-label="by-aria"
+        SLIM
+        described_class.fill_in! table_from([["by-id", "1"], ["by-name", "2"], ["by-placeholder", "3"], ["by-aria", "4"]])
+        expect(session.all("input").map(&:value)).to eq %w[1 2 3 4]
+      end
+
+      it "prefers a direct attribute match over a label match" do
+        session = test_app <<-SLIM
+          label for="labelled" F
+          input id="labelled"
+          input name="F"
+        SLIM
+        described_class.fill_in! table_from([["F", "V"]])
+        expect(session.find("input[name=F]").value).to eq "V"
+        expect(session.find("#labelled").value).to eq ""
+      end
+
+      it "matches the start of an associated label's whitespace-normalized text" do
+        session = test_app <<-SLIM
+          label for="f"
+            | First
+            br
+            |   Name (required)
+          input id="f"
+        SLIM
+        described_class.fill_in! table_from([["First Name", "V"]])
+        expect(session.find("#f").value).to eq "V"
+      end
+
+      it "finds a field wrapped in its label" do
+        session = test_app <<-SLIM
+          label
+            | Wrapped
+            input id="f"
+        SLIM
+        described_class.fill_in! table_from([["Wrapped", "V"]])
+        expect(session.find("#f").value).to eq "V"
+      end
+
+      it "skips hidden fields" do
+        session = test_app <<-SLIM
+          div style="display: none"
+            label for="hidden" F
+            input id="hidden"
+          label for="shown" F
+          input id="shown"
+        SLIM
+        described_class.fill_in! table_from([["F", "V"]])
+        expect(session.find("#shown").value).to eq "V"
+      end
+
+      it "finds hidden fields when Capybara is told not to ignore them" do
+        session = test_app <<-SLIM
+          div style="display: none"
+            label for="hidden" F
+            input id="hidden"
+          label for="shown" F
+          input id="shown"
+        SLIM
+        Capybara.ignore_hidden_elements = false
+        field = described_class::FieldFinder.new(session, "input").find("F")
+        expect(field[:id]).to eq "hidden"
+      ensure
+        Capybara.ignore_hidden_elements = true
+      end
+
+      it "stays within the current scope" do
+        session = test_app <<-SLIM
+          div id="outside"
+            label for="a" F
+            input id="a"
+          div id="inside"
+            label for="b" F
+            input id="b"
+        SLIM
+        session.within("#inside") { described_class.fill_in! table_from([["F", "V"]]) }
+        expect(session.find("#a").value).to eq ""
+        expect(session.find("#b").value).to eq "V"
+      end
+
+      it "waits for a field that hasn't rendered yet" do
+        session = test_app <<-SLIM
+          div id="target"
+          javascript:
+            setTimeout(function() {
+              document.getElementById("target").innerHTML = '<label for="f">F</label><input id="f">';
+            }, 200);
+        SLIM
+        described_class.fill_in! table_from([["F", "V"]])
+        expect(session.find("#f").value).to eq "V"
+      end
+
+      it "raises when no field matches" do
+        test_app "input id='f'"
+        expect {
+          described_class.fill_in! table_from([["Missing", "V"]])
+        }.to raise_error(Capybara::ElementNotFound, /Unable to find field "Missing"/)
+      end
+
+      it "works with drivers that can't run javascript" do
+        Capybara.reset_sessions!
+        Capybara.app = slim_app <<-SLIM
+          label for="f" F
+          input id="f"
+        SLIM
+        Capybara.using_driver(:rack_test) do
+          session = Capybara.current_session
+          session.visit("/")
+          described_class.fill_in! table_from([["F", "V"]])
+          expect(session.find("#f").value).to eq "V"
+        end
+      end
+
+      it "doesn't make a browser round trip for each field on the page" do
+        fields = (1..50).map { |i| %(label for="f#{i}" Field #{i}\ninput id="f#{i}") }
+        session = test_app fields.join("\n")
+
+        reads = 0
+        allow_any_instance_of(Capybara::Cuprite::Node).to receive(:[]).and_wrap_original do |original, *args|
+          reads += 1
+          original.call(*args)
+        end
+
+        described_class.fill_in! table_from([["Field 50", "V"]])
+        expect(session.find("#f50").value).to eq "V"
+        expect(reads).to be < 20
+      end
+
+      it "still finds a field when narrowing comes up empty" do
+        session = test_app <<-SLIM
+          label for="f" F
+          input id="f"
+        SLIM
+        allow_any_instance_of(described_class::FieldFinder).to receive(:narrowed_fields).and_return([])
+        described_class.fill_in! table_from([["F", "V"]])
+        expect(session.find("#f").value).to eq "V"
+      end
+
+      it "looks inside a shadow root when scoped to one" do
+        session = test_app <<-SLIM
+          div id="host"
+          label for="outer" F
+          input id="outer"
+          javascript:
+            document.getElementById("host").attachShadow({ mode: "open" }).innerHTML =
+              '<label for="inner">F</label><input id="inner">';
+        SLIM
+        field = session.within(session.find("#host").shadow_root) do
+          described_class::FieldFinder.new(session, "input").find("F")
+        end
+        expect(field[:id]).to eq "inner"
+      end
+
+      it "looks inside the current frame" do
+        session = test_app <<-SLIM
+          label for="outer" F
+          input id="outer"
+          iframe id="frame" srcdoc="<label for='inner'>F</label><input id='inner'>"
+        SLIM
+        session.within_frame("frame") do
+          field = described_class::FieldFinder.new(session, "input").find("F")
+          expect(field[:id]).to eq "inner"
+        end
+      end
+
+      describe "custom elements" do
+        def find_in template, locator
+          session = test_app <<~SLIM
+            javascript:
+              customElements.define("x-field", class extends HTMLElement {
+                get name() { return this.dataset.name }
+                get placeholder() { return this.dataset.placeholder }
+              })
+            #{template}
+          SLIM
+          described_class::FieldFinder.new(session, "input, x-field").find(locator)[:id]
+        end
+
+        it "matches a name that only exists as a property" do
+          expect(find_in(%(x-field id="a" data-name="F"), "F")).to eq "a"
+        end
+
+        it "reads the property rather than the attribute, as the driver does" do
+          expect {
+            find_in(%(x-field id="a" name="F" data-name="Q"), "F")
+          }.to raise_error(Capybara::ElementNotFound)
+        end
+
+        it "keeps a property match ahead of a later attribute match" do
+          expect(find_in(<<~SLIM, "F")).to eq "a"
+            x-field id="a" data-name="F"
+            input id="b" name="F"
+          SLIM
+        end
+
+        it "keeps a property match ahead of an earlier label match" do
+          expect(find_in(<<~SLIM, "F")).to eq "a"
+            label for="b" F
+            input id="b"
+            x-field id="a" data-placeholder="F"
+          SLIM
+        end
+
+        it "finds one by its label" do
+          expect(find_in(<<~SLIM, "F")).to eq "a"
+            label for="a" F
+            x-field id="a"
+          SLIM
+        end
+      end
+    end
+
     describe "texty fields" do
       %w(text email search tel url password datetime).each do |type|
         it "fills in #{type} fields" do
