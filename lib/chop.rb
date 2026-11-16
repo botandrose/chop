@@ -19,9 +19,14 @@ module Chop
     def empty.diff! other_table, **kwargs, &block
       if other_table.is_a?(String)
         begin
-          other_table = Capybara.current_session.find(other_table)
+          kwargs[:as] ||= Capybara.current_session.find(other_table).tag_name
         rescue Capybara::ElementNotFound
           return
+        end
+        user_block = block
+        block = proc do
+          allow_not_found
+          instance_eval &user_block if user_block
         end
       end
       super other_table, **kwargs.reverse_merge(surplus_col: true, surplus_row: true), &block

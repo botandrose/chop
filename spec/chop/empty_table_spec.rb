@@ -43,6 +43,22 @@ describe "Chop.empty_table" do
       expect { Chop.empty_table.diff!(".present") }.to \
         raise_exception(Cucumber::MultilineArgument::DataTable::Different)
     end
+
+    context "when the element is removed after the diff begins" do
+      let(:body) do
+        slim """
+          dl.doomed
+            dt A
+            dd 1
+          javascript:
+            setTimeout(() => document.querySelector('.doomed').remove(), 500)
+        """
+      end
+
+      it "passes" do
+        Chop.empty_table.diff!(".doomed")
+      end
+    end
   end
 
   def slim template
